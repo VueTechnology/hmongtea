@@ -6,4 +6,8 @@ pack-extra.jpg keeps a web address across the box and the pitcher, so that file 
 
 The staff product check first ran after logout, when the customer session was already gone. It now runs while that customer is still signed in.
 
+Staff can create a customer or a partner, place an order on that account, and send a password reset. Every staff account can do all three. Customers and partners are rejected on the server.
+
+Password reset and set-password mail go to Mailpit v1.34.0 in this compose file. A real send needs a provider connected on the mail transport.
+
 Customer customer@hmongtea.com uses CUSTOMER_PASSWORD. Partner partner@hmongtea.com uses PARTNER_PASSWORD. Staff staff@hmongtea.com uses STAFF_PASSWORD. Those values live only in this desktop's .env.

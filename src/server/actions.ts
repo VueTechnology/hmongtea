@@ -3,6 +3,7 @@ import { parseCartQty } from "#/domain/cart";
 import { parseEin } from "#/domain/ein";
 import { readPaymentGate } from "#/domain/payment-gate";
 import { portalHome, portalOf } from "#/domain/portal";
+import { parsePartnerTier } from "#/domain/prices";
 import { newToken, tokenEquals } from "#/domain/secret";
 import { paidOrderId, readStripeEvent } from "#/domain/stripe-event";
 import {
@@ -32,6 +33,13 @@ import {
 import { type AppEnv, readEnv } from "#/server/env";
 import { verifyPassword } from "#/server/passwords";
 import { consumeRateLimit } from "#/server/rate";
+import {
+	completeReset,
+	createDeskAccount,
+	placeDeskOrder,
+	requestPublicReset,
+	sendDeskReset,
+} from "#/server/staff-desk";
 import {
 	audit,
 	cancelOrder,
@@ -683,6 +691,120 @@ function isStaffPath(path: string): boolean {
 	return path.startsWith("/staff") && path !== "/staff/login";
 }
 
+function staffBack(value: string | undefined): string {
+	if (value === "/staff/customers" || value === "/staff/accounts") return value;
+	if (value && /^\/staff\/wholesale\/[0-9a-f-]{36}$/i.test(value)) return value;
+	return "/staff/customers";
+}
+
+async function forgotPassword(
+	request: Request,
+	fields: Record<string, string>,
+	env: AppEnv,
+): Promise<Response> {
+	const hits = await consumeRateLimit(
+		getDb(),
+		`reset:${clientKey(request, env)}`,
+		env.rateLimitMax,
+	);
+	if (hits > env.rateLimitMax) return tooMany();
+	const email = parseEmail(fields.email);
+	if (email) await requestPublicReset(getDb(), env, email);
+	return redirect("/forgot?reset=1");
+}
+
+async function resetPassword(
+	fields: Record<string, string>,
+): Promise<Response> {
+	const token = fields.token ?? "";
+	const password = parsePassword(fields.password);
+	if (!password) return redirect("/reset?error=password");
+	const result = await completeReset(getDb(), token, password);
+	if (result !== "ok") return redirect("/reset?error=token");
+	return redirect("/login?saved=1");
+}
+
+async function staffCreatePost(
+	fields: Record<string, string>,
+	viewer: Viewer,
+	env: AppEnv,
+): Promise<Response> {
+	const name = parseName(fields.name, true);
+	const email = parseEmail(fields.email);
+	const phone = parsePhone(fields.phone, true);
+	const role =
+		fields.role === "partner"
+			? "partner"
+			: fields.role === "customer"
+				? "customer"
+				: null;
+	const sendLink = fields.sendPassword === "1";
+	const password = sendLink ? null : parsePassword(fields.password);
+	const company = parseText(fields.company, 160, role === "partner");
+	const tier = parsePartnerTier(fields.tier);
+	if (!email) return redirect("/staff/accounts?error=email");
+	if (!name) return redirect("/staff/accounts?error=name");
+	if (phone == null) return redirect("/staff/accounts?error=phone");
+	if (!role) return redirect("/staff/accounts?error=role");
+	if (role === "partner" && !company)
+		return redirect("/staff/accounts?error=company");
+	if (role === "partner" && !tier)
+		return redirect("/staff/accounts?error=tier");
+	if (!sendLink && !password) return redirect("/staff/accounts?error=password");
+	const created = await createDeskAccount(getDb(), env, viewer.id, {
+		name,
+		email,
+		phone,
+		role,
+		company: company ?? "",
+		tier: role === "partner" ? tier : null,
+		password,
+	});
+	if (!created.ok && created.error === "taken")
+		return redirect("/staff/accounts?error=taken");
+	if (!created.ok) return redirect("/staff/accounts?error=tier");
+	return redirect("/staff/accounts?saved=1");
+}
+
+async function staffBehalfPost(
+	fields: Record<string, string>,
+	viewer: Viewer,
+): Promise<Response> {
+	const accountId = fields.accountId ?? "";
+	const qty = parseQty(fields.qty);
+	const name = parseName(fields.contactName, true);
+	const phone = parsePhone(fields.phone, false);
+	const address = parseAddress(fields);
+	if (!/^[0-9a-f-]{36}$/i.test(accountId))
+		return redirect("/staff/orders/new?error=missing");
+	if (qty == null || qty < 1) return redirect("/staff/orders/new?error=qty");
+	if (!name) return redirect("/staff/orders/new?error=name");
+	if (phone == null) return redirect("/staff/orders/new?error=phone");
+	if (!address) return redirect("/staff/orders/new?error=address");
+	const placed = await placeDeskOrder(getDb(), viewer.id, {
+		accountId,
+		qty,
+		contactName: name,
+		phone,
+		address,
+	});
+	if (!placed.ok) return redirect(`/staff/orders/new?error=${placed.error}`);
+	return redirect(`/staff/orders/${placed.orderId}`);
+}
+
+async function staffResetPost(
+	fields: Record<string, string>,
+	viewer: Viewer,
+	env: AppEnv,
+): Promise<Response> {
+	const email = parseEmail(fields.email);
+	const back = staffBack(fields.back);
+	if (!email) return redirect(`${back}?error=email`);
+	const sent = await sendDeskReset(getDb(), env, viewer.id, email);
+	if (sent === "missing") return redirect(`${back}?error=missing`);
+	return redirect(`${back}?saved=1`);
+}
+
 export async function handlePost(request: Request): Promise<Response> {
 	const env = readEnv();
 	if (!originOk(request, env)) return forbidden();
@@ -704,6 +826,8 @@ export async function handlePost(request: Request): Promise<Response> {
 		return redirect(`${back}?error=csrf`);
 	}
 	if (path === "/login") return login(request, fields, "any", env);
+	if (path === "/forgot") return forgotPassword(request, fields, env);
+	if (path === "/reset") return resetPassword(fields);
 	if (path === "/wholesale/login")
 		return login(request, fields, "wholesale", env);
 	if (path === "/staff/login") return login(request, fields, "staff", env);
@@ -747,6 +871,10 @@ export async function handlePost(request: Request): Promise<Response> {
 	const staffWholesale = path.match(/^\/staff\/wholesale\/([0-9a-f-]{36})$/i);
 	if (staffWholesale?.[1])
 		return staffWholesalePost(staffWholesale[1], fields, viewer);
+	if (path === "/staff/accounts") return staffCreatePost(fields, viewer, env);
+	if (path === "/staff/orders/new") return staffBehalfPost(fields, viewer);
+	if (path === "/staff/password-reset")
+		return staffResetPost(fields, viewer, env);
 	if (path === "/staff/signups") return staffSignupPost(fields, viewer);
 	if (path === "/staff/blasts") return blastPost(fields, viewer, env);
 	if (path === "/staff/campaign") return campaignPost(fields, viewer);

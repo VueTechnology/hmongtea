@@ -15,6 +15,8 @@ export type AppEnv = {
 	stripeWebhook: string;
 	allowTestIp: boolean;
 	rateLimitMax: number;
+	smtpHost: string;
+	smtpPort: number;
 };
 
 export function readEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
@@ -39,5 +41,13 @@ export function readEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
 		stripeWebhook: source.STRIPE_WEBHOOK_SECRET ?? "",
 		allowTestIp: source.ALLOW_TEST_IP === "1",
 		rateLimitMax: Number.isInteger(max) && max >= 1 && max <= 100 ? max : 20,
+		smtpHost: (source.SMTP_HOST ?? "").trim(),
+		smtpPort: smtpPort(source.SMTP_PORT),
 	};
+}
+
+function smtpPort(value: string | undefined): number {
+	const port = Number(value ?? "1025");
+	if (!Number.isInteger(port) || port < 1 || port > 65535) return 1025;
+	return port;
 }

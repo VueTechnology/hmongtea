@@ -109,6 +109,7 @@ export async function createAccount(
 		resaleCertificate?: string;
 		taxId?: string | null;
 		netTerms?: boolean;
+		pricingTier?: "case" | "half" | "pallet" | null;
 	},
 ): Promise<
 	{ ok: true; id: string } | { ok: false; error: "taken" | "ein" | "key" }
@@ -147,6 +148,7 @@ export async function createAccount(
 			taxIdCipher: cipher,
 			taxIdLast4: last4,
 			netTerms: input.netTerms ?? false,
+			pricingTier: input.pricingTier ?? null,
 		});
 	} catch (error) {
 		if (uniqueViolation(error)) return { ok: false, error: "taken" };
@@ -313,6 +315,7 @@ export type PlaceInput = {
 	phone: string;
 	address: AddressInput;
 	payment: "demo" | "stripe" | "net-terms-placeholder";
+	placedByStaffId?: string | null;
 };
 
 export class StockShort extends Error {}
@@ -382,6 +385,7 @@ export async function insertOrder(
 		totalCents: quote.totalCents,
 		paymentMode: input.payment,
 		netTerms: input.payment === "net-terms-placeholder",
+		placedByStaffId: input.placedByStaffId ?? null,
 	});
 	return id;
 }
@@ -465,6 +469,24 @@ export async function searchOrders(
 		.orderBy(desc(orders.createdAt));
 }
 
+function behalfQty(
+	current: OrderRow,
+	qty: number,
+): { ok: true; quote: Quote } | { ok: false; error: "qty" } {
+	const floor = current.side === "wholesale" ? 12 : 1;
+	if (!Number.isInteger(qty) || qty < floor || qty > 999)
+		return { ok: false, error: "qty" };
+	return {
+		ok: true,
+		quote: {
+			side: current.side,
+			qty,
+			unitCents: current.unitCents,
+			totalCents: current.unitCents * qty,
+		},
+	};
+}
+
 export async function updateOrderDetails(
 	db: Database,
 	id: string,
@@ -484,7 +506,9 @@ export async function updateOrderDetails(
 	let totalCents = current.totalCents;
 	let qty = current.qty;
 	if (input.qty != null && input.qty !== current.qty) {
-		const quote = quoteForAccount(input.account, current.side, input.qty);
+		const quote = current.placedByStaffId
+			? behalfQty(current, input.qty)
+			: quoteForAccount(input.account, current.side, input.qty);
 		if (!quote.ok) return "qty";
 		const delta = quote.quote.qty - current.qty;
 		if (delta > 0) {
@@ -720,8 +744,18 @@ export async function audit(
 
 export async function listAudit(db: Database) {
 	return db
-		.select()
+		.select({
+			id: auditLog.id,
+			staffId: auditLog.staffId,
+			staffEmail: accounts.email,
+			action: auditLog.action,
+			subjectType: auditLog.subjectType,
+			subjectId: auditLog.subjectId,
+			detail: auditLog.detail,
+			createdAt: auditLog.createdAt,
+		})
 		.from(auditLog)
+		.leftJoin(accounts, eq(accounts.id, auditLog.staffId))
 		.orderBy(desc(auditLog.createdAt))
 		.limit(200);
 }

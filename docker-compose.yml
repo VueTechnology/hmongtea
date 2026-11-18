@@ -39,12 +39,24 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
       NODE_ENV: production
     volumes:
       - hmongtea-data:/data
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  mailpit:
+    image: axllent/mailpit:v1.34.0
+    ports:
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
+    environment:
+      MP_MAX_MESSAGES: "500"
 
 volumes:
   hmongtea-pg:

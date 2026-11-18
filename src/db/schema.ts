@@ -28,6 +28,7 @@ export const accounts = pgTable("accounts", {
 	taxIdLast4: text("tax_id_last4").notNull().default(""),
 	netTerms: boolean("net_terms").notNull().default(false),
 	emailOptOut: boolean("email_opt_out").notNull().default(false),
+	pricingTier: text("pricing_tier").$type<"case" | "half" | "pallet">(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
 		.notNull()
 		.defaultNow(),
@@ -85,6 +86,7 @@ export const orders = pgTable("orders", {
 	netTerms: boolean("net_terms").notNull().default(false),
 	shipDate: date("ship_date", { mode: "string" }),
 	trackingNumber: text("tracking_number"),
+	placedByStaffId: uuid("placed_by_staff_id"),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
 		.notNull()
 		.defaultNow(),
@@ -138,6 +140,21 @@ export const blastRecipients = pgTable("blast_recipients", {
 	blastId: uuid("blast_id").notNull(),
 	email: text("email").notNull(),
 	status: text("status").$type<"logged" | "sent" | "failed">().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+		.notNull()
+		.defaultNow(),
+});
+
+export const passwordResets = pgTable("password_resets", {
+	id: uuid("id").primaryKey(),
+	accountId: uuid("account_id").notNull(),
+	tokenHash: text("token_hash").notNull(),
+	purpose: text("purpose").$type<"set" | "reset">().notNull(),
+	expiresAt: timestamp("expires_at", {
+		withTimezone: true,
+		mode: "date",
+	}).notNull(),
+	usedAt: timestamp("used_at", { withTimezone: true, mode: "date" }),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
 		.notNull()
 		.defaultNow(),

@@ -29,6 +29,10 @@ export const errors: Record<string, string> = {
 	status: "Choose a status.",
 	missing: "That record is not on file.",
 	retail: "Partner accounts order from the partner desk.",
+	role: "Choose customer or partner.",
+	tier: "Choose a pricing tier for a partner.",
+	company: "Enter the company name.",
+	token: "This reset link has expired or was already used.",
 };
 
 export const savedText = "Saved.";

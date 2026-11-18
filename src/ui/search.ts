@@ -6,6 +6,7 @@ export type Notes = {
 	cancelled?: string;
 	shipped?: string;
 	deleted?: string;
+	reset?: string;
 	q?: string;
 	side?: string;
 	status?: string;
@@ -31,6 +32,7 @@ export function noteSearch(search: Record<string, unknown>): Notes {
 	flag("cancelled", search.cancelled);
 	flag("shipped", search.shipped);
 	flag("deleted", search.deleted);
+	flag("reset", search.reset);
 	text("q", search.q, 120);
 	text("side", search.side, 20);
 	text("status", search.status, 20);

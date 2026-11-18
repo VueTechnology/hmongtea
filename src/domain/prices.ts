@@ -10,6 +10,37 @@ export const WHOLESALE_TIERS = [
 	{ minQty: 48, maxQty: null, unitCents: 2000, label: "48 or more packs" },
 ] as const;
 
+export const PARTNER_TIERS = [
+	{
+		id: "case",
+		unitCents: WHOLESALE_TIERS[0].unitCents,
+		label: WHOLESALE_TIERS[0].label,
+	},
+	{
+		id: "half",
+		unitCents: WHOLESALE_TIERS[1].unitCents,
+		label: WHOLESALE_TIERS[1].label,
+	},
+	{
+		id: "pallet",
+		unitCents: WHOLESALE_TIERS[2].unitCents,
+		label: WHOLESALE_TIERS[2].label,
+	},
+] as const;
+
+export type PartnerTierId = (typeof PARTNER_TIERS)[number]["id"];
+
+export function parsePartnerTier(value: unknown): PartnerTierId | null {
+	if (value === "case" || value === "half" || value === "pallet") return value;
+	return null;
+}
+
+export function partnerTierCents(id: PartnerTierId): number {
+	const tier = PARTNER_TIERS.find((item) => item.id === id);
+	if (!tier) throw new Error("Unknown partner tier");
+	return tier.unitCents;
+}
+
 export const MAX_QTY = 999;
 
 export const PRODUCT_SKU = "KUABCHA-PACK";

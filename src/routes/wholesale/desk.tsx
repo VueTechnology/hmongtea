@@ -77,6 +77,9 @@ function Desk() {
 							<Status value={order.status} />, {order.qty} packs,{" "}
 							<Money cents={order.totalCents} />
 						</p>
+						{order.placedByStaffId ? (
+							<p className="m-0 text-sm">Placed by staff.</p>
+						) : null}
 					</li>
 				))}
 			</ul>

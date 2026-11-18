@@ -2,12 +2,14 @@ import { getDb } from "#/db/client";
 import { parseCartQty } from "#/domain/cart";
 import {
 	MOQ,
+	PARTNER_TIERS,
 	PRODUCT_NAME,
 	RETAIL_CENTS,
 	WHOLESALE_TIERS,
 } from "#/domain/prices";
 import { newToken } from "#/domain/secret";
 import { readEnv } from "#/server/env";
+import { listDeskTargets } from "#/server/staff-desk";
 import {
 	confirmSignup,
 	findAccountById,
@@ -53,6 +55,7 @@ export type OrderView = {
 	netTerms: boolean;
 	shipDate: string | null;
 	trackingNumber: string | null;
+	placedByStaffId: string | null;
 	createdAt: string;
 };
 
@@ -86,6 +89,7 @@ export function viewOrder(row: OrderRow): OrderView {
 		netTerms: row.netTerms,
 		shipDate: row.shipDate,
 		trackingNumber: row.trackingNumber,
+		placedByStaffId: row.placedByStaffId,
 		createdAt: row.createdAt.toISOString(),
 	};
 }
@@ -267,7 +271,13 @@ export async function staffOrder(session: string, id: string) {
 	if (gate.kind !== "ok") return gate;
 	const row = await readOrderFor(getDb(), gate.viewer, id);
 	if (row === "forbidden" || !row) return { kind: "forbidden" as const };
-	return { kind: "ok" as const, order: viewOrder(row) };
+	const placedBy = row.placedByStaffId
+		? await findAccountById(getDb(), row.placedByStaffId)
+		: null;
+	return {
+		kind: "ok" as const,
+		order: { ...viewOrder(row), placedByEmail: placedBy?.email ?? null },
+	};
 }
 
 export async function staffSignups(
@@ -344,6 +354,7 @@ export async function staffAudit(session: string) {
 			subjectType: row.subjectType,
 			subjectId: row.subjectId,
 			detail: row.detail,
+			staffEmail: row.staffEmail,
 			createdAt: row.createdAt.toISOString(),
 		})),
 	};
@@ -393,6 +404,19 @@ export async function runConfirm(token: string) {
 
 export async function runUnsubscribe(token: string) {
 	return { result: await unsubscribeToken(getDb(), token) };
+}
+
+export async function staffAccountForm(session: string) {
+	const gate = await requireStaff(session);
+	if (gate.kind !== "ok") return gate;
+	return { kind: "ok" as const, tiers: PARTNER_TIERS };
+}
+
+export async function staffOrderForm(session: string) {
+	const gate = await requireStaff(session);
+	if (gate.kind !== "ok") return gate;
+	const targets = await listDeskTargets(getDb());
+	return { kind: "ok" as const, targets };
 }
 
 export async function staffCustomers(session: string) {

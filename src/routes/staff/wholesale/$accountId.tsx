@@ -132,6 +132,18 @@ function WholesaleAccount() {
 					</button>
 				</form>
 			) : null}
+			<form className="mt-6" method="post" action="/staff/password-reset">
+				<Csrf />
+				<input type="hidden" name="email" value={account.email} />
+				<input
+					type="hidden"
+					name="back"
+					value={`/staff/wholesale/${account.id}`}
+				/>
+				<button className={quietButtonClass} type="submit">
+					Send password reset
+				</button>
+			</form>
 			<p>
 				<Link to="/staff/wholesale">All partner accounts</Link>
 			</p>

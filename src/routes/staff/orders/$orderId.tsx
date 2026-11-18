@@ -43,6 +43,7 @@ function StaffOrder() {
 			<Title eyebrow="Staff" title="Order" />
 			<Notes notes={notes} />
 			<OrderFacts order={order} />
+			{order.placedByEmail ? <p>Placed by {order.placedByEmail}.</p> : null}
 			<p className="text-sm text-muted">{order.contactEmail}</p>
 			{open ? (
 				<form className="mt-8 grid max-w-lg gap-4" method="post">

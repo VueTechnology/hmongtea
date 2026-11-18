@@ -171,6 +171,24 @@ export const loadStaffAudit = createServerFn({ method: "GET" }).handler(
 	},
 );
 
+export const loadStaffAccountForm = createServerFn({ method: "GET" }).handler(
+	async () => {
+		const { staffAccountForm } = await import("#/server/pages");
+		const page = await staffAccountForm(await sessionCookie());
+		if (page.kind === "forbidden") await markStatus(403);
+		return page;
+	},
+);
+
+export const loadStaffOrderForm = createServerFn({ method: "GET" }).handler(
+	async () => {
+		const { staffOrderForm } = await import("#/server/pages");
+		const page = await staffOrderForm(await sessionCookie());
+		if (page.kind === "forbidden") await markStatus(403);
+		return page;
+	},
+);
+
 export const loadStaffCustomers = createServerFn({ method: "GET" }).handler(
 	async () => {
 		const { staffCustomers } = await import("#/server/pages");

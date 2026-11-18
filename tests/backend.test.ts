@@ -979,4 +979,395 @@ test("postgres backend", async () => {
 		}),
 	);
 	expect(badOrigin.status).toBe(403);
+
+	const adaBackIssued = await issueCsrf();
+	const adaBack = await handlePost(
+		post(
+			"/login",
+			{
+				csrf: adaBackIssued.token,
+				email: "ada@example.com",
+				password: retailPassword,
+			},
+			adaBackIssued.cookie,
+			"203.0.113.80",
+		),
+	);
+	expect(adaBack.headers.get("location")).toBe("/account");
+	const adaCookie = jar(adaBack, adaBackIssued.cookie);
+	const deskFields = {
+		name: "Nia",
+		email: "nia@example.com",
+		phone: "5550103333",
+		role: "customer",
+		password: `desk-${randomUUID()}`,
+	};
+	for (const [cookie, ip] of [
+		[adaCookie, "203.0.113.81"],
+		[wholesaleCookie, "203.0.113.82"],
+	] as const) {
+		const createDenied = await handlePost(
+			post(
+				"/staff/accounts",
+				{ csrf: csrfOf(cookie), ...deskFields },
+				cookie,
+				ip,
+			),
+		);
+		expect(createDenied.status).toBe(403);
+		const orderDenied = await handlePost(
+			post(
+				"/staff/orders/new",
+				{
+					csrf: csrfOf(cookie),
+					accountId: ada.id,
+					qty: "1",
+					contactName: "Ada",
+					...address,
+				},
+				cookie,
+				`${ip}.1`,
+			),
+		);
+		expect(orderDenied.status).toBe(403);
+		const resetDenied = await handlePost(
+			post(
+				"/staff/password-reset",
+				{ csrf: csrfOf(cookie), email: "ada@example.com" },
+				cookie,
+				`${ip}.2`,
+			),
+		);
+		expect(resetDenied.status).toBe(403);
+	}
+	expect(
+		(await pages.staffAccountForm(readCookie(adaCookie, SESSION_COOKIE) ?? ""))
+			.kind,
+	).toBe("forbidden");
+	expect(
+		(await pages.staffOrderForm(readCookie(adaCookie, SESSION_COOKIE) ?? ""))
+			.kind,
+	).toBe("forbidden");
+
+	const customerPassword = `desk-${randomUUID()}`;
+	const createdCustomer = await handlePost(
+		post(
+			"/staff/accounts",
+			{
+				csrf: csrfOf(staffCookie),
+				name: "Nia",
+				email: "nia@example.com",
+				phone: "5550103333",
+				role: "customer",
+				password: customerPassword,
+			},
+			staffCookie,
+			"203.0.113.83",
+		),
+	);
+	expect(createdCustomer.headers.get("location")).toBe(
+		"/staff/accounts?saved=1",
+	);
+	const nia = await store.findAccountByEmail(db, "nia@example.com");
+	expect(nia?.side).toBe("retail");
+	expect(nia?.status).toBe("active");
+	expect(nia?.passwordHash.startsWith("$argon2id$")).toBe(true);
+	expect(
+		await import("../src/server/passwords").then((mod) =>
+			mod.verifyPassword(customerPassword, nia?.passwordHash ?? ""),
+		),
+	).toBe(true);
+	const duplicateAccount = await handlePost(
+		post(
+			"/staff/accounts",
+			{
+				csrf: csrfOf(staffCookie),
+				name: "Nia",
+				email: "nia@example.com",
+				phone: "5550103333",
+				role: "customer",
+				password: customerPassword,
+			},
+			staffCookie,
+			"203.0.113.84",
+		),
+	);
+	expect(duplicateAccount.headers.get("location")).toContain("error=taken");
+	const duplicateCount = await sql<{ n: number }[]>`
+		select count(*)::int as n from accounts where email = 'nia@example.com'
+	`;
+	expect(Number(duplicateCount[0]?.n)).toBe(1);
+
+	process.env.SMTP_HOST = "127.0.0.1";
+	process.env.SMTP_PORT = "1025";
+	await fetch("http://127.0.0.1:8025/api/v1/messages", { method: "DELETE" });
+	const createdPartner = await handlePost(
+		post(
+			"/staff/accounts",
+			{
+				csrf: csrfOf(staffCookie),
+				name: "Bo",
+				email: "bo@example.com",
+				phone: "5550104444",
+				role: "partner",
+				company: "Bo Tea Co",
+				tier: "case",
+				sendPassword: "1",
+			},
+			staffCookie,
+			"203.0.113.85",
+		),
+	);
+	expect(createdPartner.headers.get("location")).toBe(
+		"/staff/accounts?saved=1",
+	);
+	const bo = await store.findAccountByEmail(db, "bo@example.com");
+	expect(bo?.side).toBe("wholesale");
+	expect(bo?.legalName).toBe("Bo Tea Co");
+	expect(bo?.pricingTier).toBe("case");
+	expect(bo?.status).toBe("active");
+	const setMail = await mailpitText(
+		"bo@example.com",
+		"Set your hmongtea.com password",
+	);
+	expect(setMail.includes("/reset?token=")).toBe(true);
+
+	if (!nia || !bo || !staffRow) throw new Error("missing desk accounts");
+	const customerOrder = await handlePost(
+		post(
+			"/staff/orders/new",
+			{
+				csrf: csrfOf(staffCookie),
+				accountId: nia.id,
+				qty: "2",
+				contactName: "Nia",
+				...address,
+			},
+			staffCookie,
+			"203.0.113.86",
+		),
+	);
+	expect(customerOrder.status).toBe(303);
+	const customerOrderId = orderIdFrom(customerOrder);
+	const customerRow = await store.getOrder(db, customerOrderId);
+	expect(customerRow?.accountId).toBe(nia.id);
+	expect(customerRow?.unitCents).toBe(3200);
+	expect(customerRow?.totalCents).toBe(6400);
+	expect(customerRow?.placedByStaffId).toBe(staffRow.id);
+	const niaSession = await store.openSession(db, nia.id);
+	const niaPage = await pages.accountPage(niaSession.token);
+	expect(niaPage.kind).toBe("ok");
+	if (niaPage.kind === "ok") {
+		expect(
+			niaPage.orders.some(
+				(order) =>
+					order.id === customerOrderId &&
+					order.totalCents === 6400 &&
+					order.placedByStaffId === staffRow.id,
+			),
+		).toBe(true);
+	}
+	const partnerOrder = await handlePost(
+		post(
+			"/staff/orders/new",
+			{
+				csrf: csrfOf(staffCookie),
+				accountId: bo.id,
+				qty: "12",
+				contactName: "Bo",
+				...address,
+			},
+			staffCookie,
+			"203.0.113.87",
+		),
+	);
+	const partnerOrderId = orderIdFrom(partnerOrder);
+	const partnerRow = await store.getOrder(db, partnerOrderId);
+	expect(partnerRow?.unitCents).toBe(2400);
+	expect(partnerRow?.totalCents).toBe(28800);
+	expect(partnerRow?.placedByStaffId).toBe(staffRow.id);
+	const frozen = await store.updateOrderDetails(db, partnerOrderId, {
+		contactName: "Bo",
+		contactPhone: address.phone,
+		address,
+		qty: 48,
+		account: bo,
+	});
+	expect(frozen).toBe("ok");
+	const editedRow = await store.getOrder(db, partnerOrderId);
+	expect(editedRow?.qty).toBe(48);
+	expect(editedRow?.unitCents).toBe(2400);
+	expect(editedRow?.totalCents).toBe(115200);
+	const boSession = await store.openSession(db, bo.id);
+	const boPage = await pages.wholesaleDesk(boSession.token);
+	expect(boPage.kind).toBe("ok");
+	if (boPage.kind === "ok") {
+		expect(boPage.orders.some((order) => order.id === partnerOrderId)).toBe(
+			true,
+		);
+	}
+
+	await fetch("http://127.0.0.1:8025/api/v1/messages", { method: "DELETE" });
+	const resetSend = await handlePost(
+		post(
+			"/staff/password-reset",
+			{
+				csrf: csrfOf(staffCookie),
+				email: "nia@example.com",
+				back: "/staff/customers",
+			},
+			staffCookie,
+			"203.0.113.88",
+		),
+	);
+	expect(resetSend.headers.get("location")).toBe("/staff/customers?saved=1");
+	const resetText = await mailpitText(
+		"nia@example.com",
+		"Reset your hmongtea.com password",
+	);
+	expect(resetText.includes("/reset?token=")).toBe(true);
+	const resetToken = resetText.match(/token=(\S+)/)?.[1] ?? "";
+	expect(resetToken.length).toBeGreaterThan(20);
+	const nextPassword = `next-${randomUUID()}`;
+	const resetIssued = await issueCsrf();
+	const resetOk = await handlePost(
+		post(
+			"/reset",
+			{
+				csrf: resetIssued.token,
+				token: resetToken,
+				password: nextPassword,
+			},
+			resetIssued.cookie,
+			"203.0.113.89",
+		),
+	);
+	expect(resetOk.headers.get("location")).toBe("/login?saved=1");
+	const resetAgain = await handlePost(
+		post(
+			"/reset",
+			{
+				csrf: resetIssued.token,
+				token: resetToken,
+				password: nextPassword,
+			},
+			resetIssued.cookie,
+			"203.0.113.90",
+		),
+	);
+	expect(resetAgain.headers.get("location")).toContain("error=token");
+	const niaLogin = await handlePost(
+		post(
+			"/login",
+			{
+				csrf: csrfOf(resetIssued.cookie),
+				email: "nia@example.com",
+				password: nextPassword,
+			},
+			resetIssued.cookie,
+			"203.0.113.91",
+		),
+	);
+	expect(niaLogin.headers.get("location")).toBe("/account");
+
+	await fetch("http://127.0.0.1:8025/api/v1/messages", { method: "DELETE" });
+	const expiring = await handlePost(
+		post(
+			"/staff/password-reset",
+			{
+				csrf: csrfOf(staffCookie),
+				email: "nia@example.com",
+				back: "/staff/customers",
+			},
+			staffCookie,
+			"203.0.113.92",
+		),
+	);
+	expect(expiring.headers.get("location")).toBe("/staff/customers?saved=1");
+	const expiringText = await mailpitText(
+		"nia@example.com",
+		"Reset your hmongtea.com password",
+	);
+	const expiringToken = expiringText.match(/token=(\S+)/)?.[1] ?? "";
+	expect(expiringToken.length).toBeGreaterThan(20);
+	const { sha256 } = await import("../src/domain/secret");
+	await sql`
+		update password_resets
+		set expires_at = now() - interval '1 minute'
+		where token_hash = ${sha256(expiringToken)}
+	`;
+	const expiredIssued = await issueCsrf();
+	const expired = await handlePost(
+		post(
+			"/reset",
+			{
+				csrf: expiredIssued.token,
+				token: expiringToken,
+				password: `later-${randomUUID()}`,
+			},
+			expiredIssued.cookie,
+			"203.0.113.93",
+		),
+	);
+	expect(expired.headers.get("location")).toContain("error=token");
+
+	const forgotIssued = await issueCsrf();
+	const forgotMissing = await handlePost(
+		post(
+			"/forgot",
+			{ csrf: forgotIssued.token, email: "nobody@example.com" },
+			forgotIssued.cookie,
+			"203.0.113.94",
+		),
+	);
+	const forgotKnown = await handlePost(
+		post(
+			"/forgot",
+			{ csrf: forgotIssued.token, email: "nia@example.com" },
+			forgotIssued.cookie,
+			"203.0.113.95",
+		),
+	);
+	expect(forgotMissing.status).toBe(forgotKnown.status);
+	expect(forgotMissing.headers.get("location")).toBe("/forgot?reset=1");
+	expect(forgotKnown.headers.get("location")).toBe("/forgot?reset=1");
+
+	const deskAudit = await store.listAudit(db);
+	expect(
+		deskAudit.some(
+			(row) =>
+				row.action === "account.create" &&
+				row.staffEmail === "staff@hmongtea.com",
+		),
+	).toBe(true);
+	expect(deskAudit.some((row) => row.action === "order.behalf")).toBe(true);
+	expect(deskAudit.some((row) => row.action === "password.reset_send")).toBe(
+		true,
+	);
+	expect(deskAudit.some((row) => row.detail.includes(resetToken))).toBe(false);
+	expect(deskAudit.some((row) => row.detail.includes(customerPassword))).toBe(
+		false,
+	);
+	process.env.SMTP_HOST = "";
 });
+
+function orderIdFrom(response: Response): string {
+	const location = response.headers.get("location") ?? "";
+	const id = location.split("/").pop() ?? "";
+	expect(id).toMatch(/^[0-9a-f-]{36}$/i);
+	return id;
+}
+
+async function mailpitText(to: string, subject: string): Promise<string> {
+	const listed = await fetch(
+		`http://127.0.0.1:8025/api/v1/search?query=${encodeURIComponent(`to:${to}`)}`,
+	);
+	const body = (await listed.json()) as {
+		messages?: { ID: string; Subject: string }[];
+	};
+	const hit = body.messages?.find((message) => message.Subject === subject);
+	expect(hit?.ID).toBeTruthy();
+	const full = await fetch(`http://127.0.0.1:8025/api/v1/message/${hit?.ID}`);
+	const message = (await full.json()) as { Text?: string };
+	return message.Text ?? "";
+}

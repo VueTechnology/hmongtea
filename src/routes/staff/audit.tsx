@@ -24,6 +24,7 @@ function Audit() {
 					<thead>
 						<tr className="border-b border-line">
 							<th className="py-2 pr-3 font-medium">When</th>
+							<th className="py-2 pr-3 font-medium">Who</th>
 							<th className="py-2 pr-3 font-medium">Action</th>
 							<th className="py-2 pr-3 font-medium">Subject</th>
 							<th className="py-2 pr-3 font-medium">Detail</th>
@@ -35,6 +36,7 @@ function Audit() {
 								<td className="py-2 pr-3">
 									{entry.createdAt.slice(0, 16).replace("T", " ")}
 								</td>
+								<td className="py-2 pr-3">{entry.staffEmail ?? "Unknown"}</td>
 								<td className="py-2 pr-3">{entry.action}</td>
 								<td className="py-2 pr-3">
 									{entry.subjectType} {entry.subjectId}

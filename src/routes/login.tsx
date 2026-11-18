@@ -40,6 +40,9 @@ function Login() {
 				</button>
 			</form>
 			<p>
+				<Link to="/forgot">Forgot password</Link>
+			</p>
+			<p>
 				New account? <Link to="/register">Register</Link>
 			</p>
 		</Page>

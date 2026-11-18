@@ -35,6 +35,8 @@ export function SiteFrame({ children }: { children: ReactNode }) {
 				{ to: "/staff", label: "Home" },
 				{ to: "/staff/orders", label: "Orders" },
 				{ to: "/staff/customers", label: "Customers" },
+				{ to: "/staff/accounts", label: "New account" },
+				{ to: "/staff/orders/new", label: "Order for" },
 				{ to: "/staff/wholesale", label: "Partners" },
 				{ to: "/staff/products", label: "Products" },
 				{ to: "/staff/signups", label: "Sign-ups" },
@@ -181,21 +183,23 @@ export function Notice({ children }: { children: ReactNode }) {
 
 export function Notes({ notes }: { notes: SearchNotes }) {
 	const error = notes.error ? errors[notes.error] : "";
-	const success = notes.saved
-		? savedText
-		: notes.cancelled
-			? cancelledText
-			: notes.shipped
-				? shippedText
-				: notes.deleted
-					? deletedText
-					: notes.joined === "1"
-						? "Check your email and confirm the request. With no Resend key, the message is on the dev mail page."
-						: notes.joined === "already"
-							? "That email is already confirmed."
-							: notes.sent
-								? `The blast was recorded for ${notes.sent} recipients.`
-								: "";
+	const success = notes.reset
+		? "If that email is on file, a reset link is on its way."
+		: notes.saved
+			? savedText
+			: notes.cancelled
+				? cancelledText
+				: notes.shipped
+					? shippedText
+					: notes.deleted
+						? deletedText
+						: notes.joined === "1"
+							? "Check your email and confirm the request. With no Resend key, the message is on the dev mail page."
+							: notes.joined === "already"
+								? "That email is already confirmed."
+								: notes.sent
+									? `The blast was recorded for ${notes.sent} recipients.`
+									: "";
 	if (!error && !success) return null;
 	return <Notice>{error || success}</Notice>;
 }

@@ -11,11 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CartRouteImport } from './routes/cart'
+import { Route as ForgotRouteImport } from './routes/forgot'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as PreOrderRouteImport } from './routes/pre-order'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetRouteImport } from './routes/reset'
 import { Route as TeaRouteImport } from './routes/tea'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
@@ -23,11 +25,13 @@ import { Route as CheckoutIndexRouteImport } from './routes/checkout/index'
 import { Route as CheckoutDoneRouteImport } from './routes/checkout/done'
 import { Route as DevMailRouteImport } from './routes/dev/mail'
 import { Route as StaffIndexRouteImport } from './routes/staff/index'
+import { Route as StaffAccountsRouteImport } from './routes/staff/accounts'
 import { Route as StaffAuditRouteImport } from './routes/staff/audit'
 import { Route as StaffBlastsRouteImport } from './routes/staff/blasts'
 import { Route as StaffCampaignRouteImport } from './routes/staff/campaign'
 import { Route as StaffCustomersRouteImport } from './routes/staff/customers'
 import { Route as StaffLoginRouteImport } from './routes/staff/login'
+import { Route as StaffPasswordResetRouteImport } from './routes/staff/password-reset'
 import { Route as StaffProductsRouteImport } from './routes/staff/products'
 import { Route as StaffSignupsRouteImport } from './routes/staff/signups'
 import { Route as UpdatesIndexRouteImport } from './routes/updates/index'
@@ -42,6 +46,7 @@ import { Route as ApiStaffOrdersCsvRouteImport } from './routes/api/staff/orders
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
 import { Route as StaffOrdersIndexRouteImport } from './routes/staff/orders/index'
 import { Route as StaffOrdersOrderIdRouteImport } from './routes/staff/orders/$orderId'
+import { Route as StaffOrdersNewRouteImport } from './routes/staff/orders/new'
 import { Route as StaffWholesaleIndexRouteImport } from './routes/staff/wholesale/index'
 import { Route as StaffWholesaleAccountIdRouteImport } from './routes/staff/wholesale/$accountId'
 import { Route as WholesaleOrdersOrderIdRouteImport } from './routes/wholesale/orders/$orderId'
@@ -54,6 +59,11 @@ const IndexRoute = IndexRouteImport.update({
 const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotRoute = ForgotRouteImport.update({
+  id: '/forgot',
+  path: '/forgot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -79,6 +89,11 @@ const PreOrderRoute = PreOrderRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetRoute = ResetRouteImport.update({
+  id: '/reset',
+  path: '/reset',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeaRoute = TeaRouteImport.update({
@@ -116,6 +131,11 @@ const StaffIndexRoute = StaffIndexRouteImport.update({
   path: '/staff/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffAccountsRoute = StaffAccountsRouteImport.update({
+  id: '/staff/accounts',
+  path: '/staff/accounts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StaffAuditRoute = StaffAuditRouteImport.update({
   id: '/staff/audit',
   path: '/staff/audit',
@@ -139,6 +159,11 @@ const StaffCustomersRoute = StaffCustomersRouteImport.update({
 const StaffLoginRoute = StaffLoginRouteImport.update({
   id: '/staff/login',
   path: '/staff/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffPasswordResetRoute = StaffPasswordResetRouteImport.update({
+  id: '/staff/password-reset',
+  path: '/staff/password-reset',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StaffProductsRoute = StaffProductsRouteImport.update({
@@ -211,6 +236,11 @@ const StaffOrdersOrderIdRoute = StaffOrdersOrderIdRouteImport.update({
   path: '/staff/orders/$orderId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffOrdersNewRoute = StaffOrdersNewRouteImport.update({
+  id: '/staff/orders/new',
+  path: '/staff/orders/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StaffWholesaleIndexRoute = StaffWholesaleIndexRouteImport.update({
   id: '/staff/wholesale/',
   path: '/staff/wholesale/',
@@ -230,20 +260,24 @@ const WholesaleOrdersOrderIdRoute = WholesaleOrdersOrderIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
+  '/forgot': typeof ForgotRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/partners': typeof PartnersRoute
   '/pre-order': typeof PreOrderRoute
   '/register': typeof RegisterRoute
+  '/reset': typeof ResetRoute
   '/tea': typeof TeaRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/checkout/done': typeof CheckoutDoneRoute
   '/dev/mail': typeof DevMailRoute
+  '/staff/accounts': typeof StaffAccountsRoute
   '/staff/audit': typeof StaffAuditRoute
   '/staff/blasts': typeof StaffBlastsRoute
   '/staff/campaign': typeof StaffCampaignRoute
   '/staff/customers': typeof StaffCustomersRoute
   '/staff/login': typeof StaffLoginRoute
+  '/staff/password-reset': typeof StaffPasswordResetRoute
   '/staff/products': typeof StaffProductsRoute
   '/staff/signups': typeof StaffSignupsRoute
   '/updates/confirm': typeof UpdatesConfirmRoute
@@ -260,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/api/staff/orders-csv': typeof ApiStaffOrdersCsvRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/staff/orders/$orderId': typeof StaffOrdersOrderIdRoute
+  '/staff/orders/new': typeof StaffOrdersNewRoute
   '/staff/wholesale/$accountId': typeof StaffWholesaleAccountIdRoute
   '/wholesale/orders/$orderId': typeof WholesaleOrdersOrderIdRoute
   '/staff/orders/': typeof StaffOrdersIndexRoute
@@ -268,20 +303,24 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
+  '/forgot': typeof ForgotRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/partners': typeof PartnersRoute
   '/pre-order': typeof PreOrderRoute
   '/register': typeof RegisterRoute
+  '/reset': typeof ResetRoute
   '/tea': typeof TeaRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/checkout/done': typeof CheckoutDoneRoute
   '/dev/mail': typeof DevMailRoute
+  '/staff/accounts': typeof StaffAccountsRoute
   '/staff/audit': typeof StaffAuditRoute
   '/staff/blasts': typeof StaffBlastsRoute
   '/staff/campaign': typeof StaffCampaignRoute
   '/staff/customers': typeof StaffCustomersRoute
   '/staff/login': typeof StaffLoginRoute
+  '/staff/password-reset': typeof StaffPasswordResetRoute
   '/staff/products': typeof StaffProductsRoute
   '/staff/signups': typeof StaffSignupsRoute
   '/updates/confirm': typeof UpdatesConfirmRoute
@@ -298,6 +337,7 @@ export interface FileRoutesByTo {
   '/api/staff/orders-csv': typeof ApiStaffOrdersCsvRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/staff/orders/$orderId': typeof StaffOrdersOrderIdRoute
+  '/staff/orders/new': typeof StaffOrdersNewRoute
   '/staff/wholesale/$accountId': typeof StaffWholesaleAccountIdRoute
   '/wholesale/orders/$orderId': typeof WholesaleOrdersOrderIdRoute
   '/staff/orders': typeof StaffOrdersIndexRoute
@@ -307,20 +347,24 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
+  '/forgot': typeof ForgotRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/partners': typeof PartnersRoute
   '/pre-order': typeof PreOrderRoute
   '/register': typeof RegisterRoute
+  '/reset': typeof ResetRoute
   '/tea': typeof TeaRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/checkout/done': typeof CheckoutDoneRoute
   '/dev/mail': typeof DevMailRoute
+  '/staff/accounts': typeof StaffAccountsRoute
   '/staff/audit': typeof StaffAuditRoute
   '/staff/blasts': typeof StaffBlastsRoute
   '/staff/campaign': typeof StaffCampaignRoute
   '/staff/customers': typeof StaffCustomersRoute
   '/staff/login': typeof StaffLoginRoute
+  '/staff/password-reset': typeof StaffPasswordResetRoute
   '/staff/products': typeof StaffProductsRoute
   '/staff/signups': typeof StaffSignupsRoute
   '/updates/confirm': typeof UpdatesConfirmRoute
@@ -337,6 +381,7 @@ export interface FileRoutesById {
   '/api/staff/orders-csv': typeof ApiStaffOrdersCsvRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/staff/orders/$orderId': typeof StaffOrdersOrderIdRoute
+  '/staff/orders/new': typeof StaffOrdersNewRoute
   '/staff/wholesale/$accountId': typeof StaffWholesaleAccountIdRoute
   '/wholesale/orders/$orderId': typeof WholesaleOrdersOrderIdRoute
   '/staff/orders/': typeof StaffOrdersIndexRoute
@@ -347,20 +392,24 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/cart'
+    | '/forgot'
     | '/login'
     | '/logout'
     | '/partners'
     | '/pre-order'
     | '/register'
+    | '/reset'
     | '/tea'
     | '/unsubscribe'
     | '/checkout/done'
     | '/dev/mail'
+    | '/staff/accounts'
     | '/staff/audit'
     | '/staff/blasts'
     | '/staff/campaign'
     | '/staff/customers'
     | '/staff/login'
+    | '/staff/password-reset'
     | '/staff/products'
     | '/staff/signups'
     | '/updates/confirm'
@@ -377,6 +426,7 @@ export interface FileRouteTypes {
     | '/api/staff/orders-csv'
     | '/api/stripe/webhook'
     | '/staff/orders/$orderId'
+    | '/staff/orders/new'
     | '/staff/wholesale/$accountId'
     | '/wholesale/orders/$orderId'
     | '/staff/orders/'
@@ -385,20 +435,24 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cart'
+    | '/forgot'
     | '/login'
     | '/logout'
     | '/partners'
     | '/pre-order'
     | '/register'
+    | '/reset'
     | '/tea'
     | '/unsubscribe'
     | '/checkout/done'
     | '/dev/mail'
+    | '/staff/accounts'
     | '/staff/audit'
     | '/staff/blasts'
     | '/staff/campaign'
     | '/staff/customers'
     | '/staff/login'
+    | '/staff/password-reset'
     | '/staff/products'
     | '/staff/signups'
     | '/updates/confirm'
@@ -415,6 +469,7 @@ export interface FileRouteTypes {
     | '/api/staff/orders-csv'
     | '/api/stripe/webhook'
     | '/staff/orders/$orderId'
+    | '/staff/orders/new'
     | '/staff/wholesale/$accountId'
     | '/wholesale/orders/$orderId'
     | '/staff/orders'
@@ -423,20 +478,24 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/cart'
+    | '/forgot'
     | '/login'
     | '/logout'
     | '/partners'
     | '/pre-order'
     | '/register'
+    | '/reset'
     | '/tea'
     | '/unsubscribe'
     | '/checkout/done'
     | '/dev/mail'
+    | '/staff/accounts'
     | '/staff/audit'
     | '/staff/blasts'
     | '/staff/campaign'
     | '/staff/customers'
     | '/staff/login'
+    | '/staff/password-reset'
     | '/staff/products'
     | '/staff/signups'
     | '/updates/confirm'
@@ -453,6 +512,7 @@ export interface FileRouteTypes {
     | '/api/staff/orders-csv'
     | '/api/stripe/webhook'
     | '/staff/orders/$orderId'
+    | '/staff/orders/new'
     | '/staff/wholesale/$accountId'
     | '/wholesale/orders/$orderId'
     | '/staff/orders/'
@@ -462,20 +522,24 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CartRoute: typeof CartRoute
+  ForgotRoute: typeof ForgotRoute
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   PartnersRoute: typeof PartnersRoute
   PreOrderRoute: typeof PreOrderRoute
   RegisterRoute: typeof RegisterRoute
+  ResetRoute: typeof ResetRoute
   TeaRoute: typeof TeaRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   CheckoutDoneRoute: typeof CheckoutDoneRoute
   DevMailRoute: typeof DevMailRoute
+  StaffAccountsRoute: typeof StaffAccountsRoute
   StaffAuditRoute: typeof StaffAuditRoute
   StaffBlastsRoute: typeof StaffBlastsRoute
   StaffCampaignRoute: typeof StaffCampaignRoute
   StaffCustomersRoute: typeof StaffCustomersRoute
   StaffLoginRoute: typeof StaffLoginRoute
+  StaffPasswordResetRoute: typeof StaffPasswordResetRoute
   StaffProductsRoute: typeof StaffProductsRoute
   StaffSignupsRoute: typeof StaffSignupsRoute
   UpdatesConfirmRoute: typeof UpdatesConfirmRoute
@@ -492,6 +556,7 @@ export interface RootRouteChildren {
   ApiStaffOrdersCsvRoute: typeof ApiStaffOrdersCsvRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   StaffOrdersOrderIdRoute: typeof StaffOrdersOrderIdRoute
+  StaffOrdersNewRoute: typeof StaffOrdersNewRoute
   StaffWholesaleAccountIdRoute: typeof StaffWholesaleAccountIdRoute
   WholesaleOrdersOrderIdRoute: typeof WholesaleOrdersOrderIdRoute
   StaffOrdersIndexRoute: typeof StaffOrdersIndexRoute
@@ -512,6 +577,13 @@ declare module '@tanstack/react-router' {
       path: '/cart'
       fullPath: '/cart'
       preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot': {
+      id: '/forgot'
+      path: '/forgot'
+      fullPath: '/forgot'
+      preLoaderRoute: typeof ForgotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -547,6 +619,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset': {
+      id: '/reset'
+      path: '/reset'
+      fullPath: '/reset'
+      preLoaderRoute: typeof ResetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tea': {
@@ -598,6 +677,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff/accounts': {
+      id: '/staff/accounts'
+      path: '/staff/accounts'
+      fullPath: '/staff/accounts'
+      preLoaderRoute: typeof StaffAccountsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/staff/audit': {
       id: '/staff/audit'
       path: '/staff/audit'
@@ -631,6 +717,13 @@ declare module '@tanstack/react-router' {
       path: '/staff/login'
       fullPath: '/staff/login'
       preLoaderRoute: typeof StaffLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff/password-reset': {
+      id: '/staff/password-reset'
+      path: '/staff/password-reset'
+      fullPath: '/staff/password-reset'
+      preLoaderRoute: typeof StaffPasswordResetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/staff/products': {
@@ -731,6 +824,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffOrdersOrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff/orders/new': {
+      id: '/staff/orders/new'
+      path: '/staff/orders/new'
+      fullPath: '/staff/orders/new'
+      preLoaderRoute: typeof StaffOrdersNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/staff/wholesale/': {
       id: '/staff/wholesale/'
       path: '/staff/wholesale'
@@ -758,20 +858,24 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CartRoute: CartRoute,
+  ForgotRoute: ForgotRoute,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   PartnersRoute: PartnersRoute,
   PreOrderRoute: PreOrderRoute,
   RegisterRoute: RegisterRoute,
+  ResetRoute: ResetRoute,
   TeaRoute: TeaRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   CheckoutDoneRoute: CheckoutDoneRoute,
   DevMailRoute: DevMailRoute,
+  StaffAccountsRoute: StaffAccountsRoute,
   StaffAuditRoute: StaffAuditRoute,
   StaffBlastsRoute: StaffBlastsRoute,
   StaffCampaignRoute: StaffCampaignRoute,
   StaffCustomersRoute: StaffCustomersRoute,
   StaffLoginRoute: StaffLoginRoute,
+  StaffPasswordResetRoute: StaffPasswordResetRoute,
   StaffProductsRoute: StaffProductsRoute,
   StaffSignupsRoute: StaffSignupsRoute,
   UpdatesConfirmRoute: UpdatesConfirmRoute,
@@ -788,6 +892,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiStaffOrdersCsvRoute: ApiStaffOrdersCsvRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   StaffOrdersOrderIdRoute: StaffOrdersOrderIdRoute,
+  StaffOrdersNewRoute: StaffOrdersNewRoute,
   StaffWholesaleAccountIdRoute: StaffWholesaleAccountIdRoute,
   WholesaleOrdersOrderIdRoute: WholesaleOrdersOrderIdRoute,
   StaffOrdersIndexRoute: StaffOrdersIndexRoute,

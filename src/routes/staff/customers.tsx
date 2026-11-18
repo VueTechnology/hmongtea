@@ -1,7 +1,7 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { loadStaffCustomers } from "#/server/fns";
 import { Forbidden } from "#/ui/gate";
-import { Page, Title } from "#/ui/site";
+import { buttonClass, Csrf, Page, quietButtonClass, Title } from "#/ui/site";
 
 export const Route = createFileRoute("/staff/customers")({
 	head: () => ({ meta: [{ title: "Customers, hmongtea.com staff" }] }),
@@ -19,6 +19,11 @@ function Customers() {
 	return (
 		<Page>
 			<Title eyebrow="Staff" title="Customers" />
+			<p>
+				<Link className={quietButtonClass} to="/staff/accounts">
+					New account
+				</Link>
+			</p>
 			{page.customers.length === 0 ? <p>No customer accounts yet.</p> : null}
 			<ul className="grid list-none gap-3 p-0">
 				{page.customers.map((customer) => (
@@ -30,6 +35,14 @@ function Customers() {
 						{customer.phone ? (
 							<p className="m-0 text-sm text-muted">{customer.phone}</p>
 						) : null}
+						<form method="post" action="/staff/password-reset">
+							<Csrf />
+							<input type="hidden" name="email" value={customer.email} />
+							<input type="hidden" name="back" value="/staff/customers" />
+							<button className={buttonClass} type="submit">
+								Send password reset
+							</button>
+						</form>
 					</li>
 				))}
 			</ul>
