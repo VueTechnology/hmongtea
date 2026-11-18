@@ -1,57 +1,93 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { loadHome } from "#/fn.ts";
-import { formatUsd, percent } from "#/domain/money.ts";
-import { Eyebrow, Page, quietButtonClass } from "#/ui/site.tsx";
+import { formatUsd } from "#/domain/money";
+import {
+	NET_WEIGHT_LABEL,
+	SHIP_WINDOW,
+	SUBSCRIPTION_CENTS,
+} from "#/domain/prices";
+import { loadHome } from "#/server/fns";
+import { noteSearch } from "#/ui/search";
+import {
+	buttonClass,
+	Csrf,
+	Field,
+	Notes,
+	Page,
+	quietButtonClass,
+	Title,
+} from "#/ui/site";
 
 export const Route = createFileRoute("/")({
 	head: () => ({ meta: [{ title: "hmongtea.com" }] }),
+	validateSearch: noteSearch,
 	loader: () => loadHome(),
 	component: Home,
 });
 
 function Home() {
-	const campaign = Route.useLoaderData();
-	const width = percent(campaign.raisedCents, campaign.targetCents);
+	const home = Route.useLoaderData();
+	const notes = Route.useSearch();
 	return (
 		<Page>
-			<Eyebrow>Loose leaf</Eyebrow>
-			<h1 className="mt-3 max-w-3xl font-serif text-5xl leading-tight font-medium md:text-6xl">hmongtea.com</h1>
-			<div className="my-6 h-px w-16 bg-gold" aria-hidden="true" />
-			<p className="max-w-2xl font-serif text-2xl italic leading-snug md:text-3xl">KuabCha loose-leaf green tea.</p>
-			<div className="mt-8 grid items-start gap-8 md:grid-cols-2">
-				<div className="grid gap-4 text-lg">
-					<p className="m-0">KuabCha is loose-leaf green tea from the Golden Triangle foothills in Chiang Rai, Thailand. The pick is the top three leaves. The tea is low in caffeine.</p>
-					<p className="m-0">Pre-order a pack, or leave an email for updates from hmongtea.com.</p>
-					<div className="flex flex-wrap gap-3 pt-2">
-						<Link to="/tea" className={quietButtonClass}>
-							See the tea
+			<Title eyebrow="hmongtea.com" title="KuabCha" />
+			<Notes notes={notes} />
+			<div className="grid items-start gap-8 md:grid-cols-2">
+				<div className="grid gap-4">
+					<p className="m-0 max-w-xl font-serif text-2xl italic leading-snug">
+						Loose-leaf green tea from the Golden Triangle foothills in Chiang
+						Rai, Thailand.
+					</p>
+					<p className="m-0">
+						The pick is the top 3 leaves. Caffeine is low. Net weight{" "}
+						{NET_WEIGHT_LABEL}. Ships in {SHIP_WINDOW}.
+					</p>
+					<p className="m-0">
+						One pack is {formatUsd(home.retailCents)}. A subscription pack is{" "}
+						{formatUsd(SUBSCRIPTION_CENTS)}.
+					</p>
+					<div className="flex flex-wrap gap-3">
+						<Link to="/tea" className={buttonClass}>
+							Order
 						</Link>
-						<Link to="/updates" className={quietButtonClass}>
-							Get updates
+						<Link to="/partners" className={quietButtonClass}>
+							Partners
 						</Link>
 					</div>
 				</div>
-				<figure className="m-0 border border-line bg-paper p-3">
-					<img src="/products/pack.jpg" alt="KuabCha loose-leaf green tea pack" />
-					<figcaption className="mt-3 font-serif text-2xl">KuabCha</figcaption>
+				<figure className="stage m-0">
+					<picture>
+						<source srcSet="/products/pack-box.webp" type="image/webp" />
+						<img
+							src="/products/pack-box.png"
+							alt="KuabCha tea box, front and side"
+							width={1152}
+							height={1775}
+						/>
+					</picture>
 				</figure>
 			</div>
-			<section className="mt-14 max-w-md border border-line bg-paper px-4 py-4" aria-label="Campaign placeholder" data-testid="campaign">
-				<p className="m-0 text-xs tracking-[0.18em] text-muted uppercase">Campaign placeholder</p>
-				<p className="m-0 mt-2 text-sm">Sample figures for a first run. These amounts are placeholders.</p>
-				<div
-					className="mt-3 h-2 bg-line"
-					role="progressbar"
-					aria-valuemin={0}
-					aria-valuemax={campaign.targetCents}
-					aria-valuenow={campaign.raisedCents}
-					data-testid="kickstarter-bar"
-				>
-					<div className="h-2 bg-gold" style={{ width: `${width}%` }} />
-				</div>
-				<p className="m-0 mt-2 text-sm text-muted" data-testid="kickstarter-figures">
-					{formatUsd(campaign.raisedCents)} raised of {formatUsd(campaign.targetCents)}
+			<section className="mt-12 max-w-xl" aria-labelledby="updates-heading">
+				<h2 id="updates-heading" className="font-serif text-3xl font-medium">
+					Updates
+				</h2>
+				<p>
+					Leave an email for updates. A name is optional. The request stays
+					pending until you open the confirmation link.
 				</p>
+				<form className="grid gap-4" method="post" action="/updates">
+					<Csrf />
+					<Field
+						label="Email"
+						name="email"
+						type="email"
+						required
+						autoComplete="email"
+					/>
+					<Field label="Name" name="name" autoComplete="name" />
+					<button className={buttonClass} type="submit">
+						Request updates
+					</button>
+				</form>
 			</section>
 		</Page>
 	);

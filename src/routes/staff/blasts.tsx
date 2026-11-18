@@ -1,77 +1,80 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { loadBlasts } from "#/fn.ts";
-import { formatWhen } from "#/domain/money.ts";
-import { noteSearch } from "#/search.ts";
-import { buttonClass, Csrf, fieldClass, Flash, Notice, Page, StaffNav } from "#/ui/site.tsx";
+import { loadStaffHome } from "#/server/fns";
+import { Forbidden } from "#/ui/gate";
+import { noteSearch } from "#/ui/search";
+import {
+	buttonClass,
+	Csrf,
+	Field,
+	fieldClass,
+	Notes,
+	Page,
+	Title,
+} from "#/ui/site";
 
 export const Route = createFileRoute("/staff/blasts")({
-	head: () => ({ meta: [{ title: "Email blasts | hmongtea.com" }] }),
+	head: () => ({ meta: [{ title: "Blasts, hmongtea.com staff" }] }),
 	validateSearch: noteSearch,
 	loader: async () => {
-		const data = await loadBlasts();
-		if (data.kind === "login") throw redirect({ to: "/staff/login" });
-		return data;
+		const page = await loadStaffHome();
+		if (page.kind === "anonymous") throw redirect({ to: "/login" });
+		return page;
 	},
-	component: BlastsPage,
-	server: {
-		handlers: {
-			POST: async ({ request }) => {
-				const { postBlast } = await import("#/server/post.ts");
-				return postBlast(request);
-			},
-		},
-	},
+	component: Blasts,
+	server: { handlers: { POST } },
 });
 
-function BlastsPage() {
-	const data = Route.useLoaderData();
-	const search = Route.useSearch();
-	if (data.kind !== "ok") {
-		return (
-			<Page>
-				<h1 className="font-serif text-4xl">Blasts</h1>
-				<p>Staff only.</p>
-			</Page>
-		);
-	}
+async function POST({ request }: { request: Request }) {
+	const { handlePost } = await import("#/server/actions");
+	return handlePost(request);
+}
+
+function Blasts() {
+	const page = Route.useLoaderData();
+	const notes = Route.useSearch();
+	if (page.kind !== "ok") return <Forbidden />;
 	return (
 		<Page>
-			<StaffNav />
-			<h1 className="font-serif text-5xl font-medium">Email blasts</h1>
-			<p className="max-w-2xl">Send one note to pre-order customers, or a separate note to confirmed update sign-ups. Unsubscribed addresses are skipped.</p>
-			<Flash code={search.error} />
-			{search.sent === "1" ? <Notice>The blast was recorded.</Notice> : null}
-			<form className="mt-6 grid max-w-xl gap-4" method="post">
+			<Title eyebrow="Staff" title="Email blast" />
+			<Notes notes={notes} />
+			<p>
+				Customer mail goes to retail customers with a placed or shipped order
+				who have not unsubscribed. Update mail goes to confirmed sign-ups who
+				have not unsubscribed.
+			</p>
+			<form
+				className="grid max-w-xl gap-4"
+				method="post"
+				action="/staff/blasts"
+			>
 				<Csrf />
-				<label className="text-sm">
+				<label className="grid text-sm" htmlFor="audience">
 					Audience
-					<select className={fieldClass} name="audience" defaultValue="preorder" data-testid="blast-audience">
-						<option value="preorder">Pre-order customers</option>
+					<select
+						id="audience"
+						className={fieldClass}
+						name="audience"
+						defaultValue="preorder"
+					>
+						<option value="preorder">Customers with an order</option>
 						<option value="updates">Update sign-ups</option>
 					</select>
 				</label>
-				<label className="text-sm">
-					Subject
-					<input className={fieldClass} name="subject" required data-testid="blast-subject" />
-				</label>
-				<label className="text-sm">
+				<Field label="Subject" name="subject" required />
+				<label className="grid text-sm" htmlFor="body">
 					Message
-					<textarea className={`${fieldClass} min-h-32`} name="body" required data-testid="blast-body" />
+					<textarea
+						id="body"
+						className={fieldClass}
+						name="body"
+						rows={8}
+						required
+					/>
 				</label>
 				<button className={buttonClass} type="submit">
 					Send blast
 				</button>
 			</form>
-			<ul className="mt-8 grid gap-3">
-				{data.blasts.map((blast) => (
-					<li key={blast.id} className="border border-line bg-paper p-4">
-						<p className="m-0 font-serif text-2xl">{blast.subject}</p>
-						<p className="m-0 text-sm text-muted">
-							{blast.audience} · {formatWhen(blast.createdAt)}
-						</p>
-					</li>
-				))}
-			</ul>
 		</Page>
 	);
 }

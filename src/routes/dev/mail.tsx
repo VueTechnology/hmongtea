@@ -1,29 +1,43 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { loadMail } from "#/fn.ts";
-import { formatWhen } from "#/domain/money.ts";
-import { Eyebrow, Page } from "#/ui/site.tsx";
+import { loadDevMail } from "#/server/fns";
+import { MailText } from "#/ui/mail";
+import { Page, Title } from "#/ui/site";
 
 export const Route = createFileRoute("/dev/mail")({
-	head: () => ({ meta: [{ title: "Dev mail | hmongtea.com" }] }),
-	loader: () => loadMail(),
-	component: MailPage,
+	head: () => ({ meta: [{ title: "Dev mail, hmongtea.com" }] }),
+	loader: () => loadDevMail(),
+	component: DevMail,
 });
 
-function MailPage() {
-	const data = Route.useLoaderData();
+function DevMail() {
+	const page = Route.useLoaderData();
 	return (
 		<Page>
-			<Eyebrow>Demo</Eyebrow>
-			<h1 className="mt-3 font-serif text-5xl font-medium">Dev mail</h1>
-			{data.mode === "resend" ? <p>Mail is going out through Resend. This page hides message bodies.</p> : <p>No Resend API key is set. Messages are logged here.</p>}
-			<ul className="mt-6 grid gap-4" data-testid="mail-list">
-				{data.messages.map((message) => (
-					<li key={message.id} className="border border-line bg-paper p-4" data-testid="mail-message">
+			<Title eyebrow="Dev mail" title="Logged messages" />
+			{page.demo ? (
+				<p>Resend is off. Each message is stored here instead of being sent.</p>
+			) : (
+				<p>Resend is configured. This page stays empty.</p>
+			)}
+			{page.messages.length === 0 ? <p>No messages yet.</p> : null}
+			<ul className="grid list-none gap-4 p-0">
+				{page.messages.map((message) => (
+					<li
+						key={message.id}
+						className="border border-line bg-paper p-4"
+						data-testid="mail-message"
+					>
 						<p className="m-0 text-sm text-muted">
-							{message.to} · {formatWhen(message.createdAt)}
+							{message.createdAt.slice(0, 16).replace("T", " ")}
 						</p>
-						<p className="m-0 font-serif text-2xl">{message.subject}</p>
-						<pre className="mt-3 whitespace-pre-wrap break-words font-sans text-sm">{message.body}</pre>
+						<p className="m-0 mt-2">To {message.toEmail}</p>
+						<h2
+							className="mt-2 font-serif text-2xl font-medium"
+							data-testid="mail-subject"
+						>
+							{message.subject}
+						</h2>
+						<MailText body={message.body} />
 					</li>
 				))}
 			</ul>

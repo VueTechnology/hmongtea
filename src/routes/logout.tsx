@@ -1,20 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Page } from "#/ui/site.tsx";
+import { buttonClass, Csrf, Page, Title } from "#/ui/site";
 
 export const Route = createFileRoute("/logout")({
-	head: () => ({ meta: [{ title: "Sign out | hmongtea.com" }] }),
-	component: () => (
-		<Page>
-			<h1 className="font-serif text-4xl font-medium">Sign out</h1>
-			<p>Use the sign out button on your account.</p>
-		</Page>
-	),
-	server: {
-		handlers: {
-			POST: async ({ request }) => {
-				const { postLogout } = await import("#/server/post.ts");
-				return postLogout(request);
-			},
-		},
-	},
+	head: () => ({ meta: [{ title: "Log out, hmongtea.com" }] }),
+	component: Logout,
+	server: { handlers: { POST } },
 });
+
+async function POST({ request }: { request: Request }) {
+	const { handlePost } = await import("#/server/actions");
+	return handlePost(request);
+}
+
+function Logout() {
+	return (
+		<Page>
+			<Title eyebrow="hmongtea.com" title="Log out" />
+			<form method="post" action="/logout">
+				<Csrf />
+				<button className={buttonClass} type="submit">
+					Log out
+				</button>
+			</form>
+		</Page>
+	);
+}

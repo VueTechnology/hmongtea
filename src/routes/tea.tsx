@@ -1,83 +1,137 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { loadTea } from "#/fn.ts";
-import { formatUsd } from "#/domain/money.ts";
-import { buttonClass, Csrf, Eyebrow, Flash, Page, quietButtonClass } from "#/ui/site.tsx";
-import { noteSearch } from "#/search.ts";
-
-const PHOTOS = [
-	["/products/front.jpg", "Front of the KuabCha pack"],
-	["/products/back.jpg", "Back of the KuabCha pack"],
-	["/products/side.jpg", "Side of the KuabCha pack"],
-	["/products/bag.jpg", "KuabCha loose leaf"],
-] as const;
+import { formatUsd } from "#/domain/money";
+import {
+	NET_WEIGHT_LABEL,
+	PRODUCT_NAME,
+	RETAIL_CENTS,
+	SHIP_WINDOW,
+	SUBSCRIPTION_CENTS,
+} from "#/domain/prices";
+import { buttonClass, Csrf, fieldClass, Page, Title } from "#/ui/site";
 
 export const Route = createFileRoute("/tea")({
-	head: () => ({ meta: [{ title: "KuabCha | hmongtea.com" }] }),
-	validateSearch: noteSearch,
-	loader: () => loadTea(),
-	component: TeaPage,
-	server: {
-		handlers: {
-			POST: async ({ request }) => {
-				const { postCart } = await import("#/server/post.ts");
-				return postCart(request);
-			},
-		},
-	},
+	head: () => ({ meta: [{ title: "Tea, hmongtea.com" }] }),
+	component: Tea,
 });
 
-function TeaPage() {
-	const book = Route.useLoaderData();
-	const search = Route.useSearch();
+function Tea() {
 	return (
 		<Page>
-			<Eyebrow>KuabCha</Eyebrow>
-			<h1 className="mt-3 font-serif text-5xl font-medium">Loose-leaf green tea</h1>
-			<div className="my-6 h-px w-16 bg-gold" aria-hidden="true" />
-			<p className="max-w-2xl">Loose-leaf green tea from the Golden Triangle foothills in Chiang Rai, Thailand. The pick is the top three leaves. The tea is low in caffeine.</p>
-			<Flash code={search.error} />
-			<div className="mt-8 grid gap-4 sm:grid-cols-2">
-				{PHOTOS.map(([src, alt]) => (
-					<img key={src} src={src} alt={alt} className="border border-line bg-paper" />
-				))}
-			</div>
-			{book.side === "retail" && book.unitCents ? (
-				<form className="mt-8 grid max-w-sm gap-4" method="post" action="/tea">
-					<Csrf />
-					<input type="hidden" name="intent" value="add" />
-					<p className="m-0 font-serif text-3xl" data-testid="retail-price">
-						{formatUsd(book.unitCents)} a pack
+			<Title eyebrow="hmongtea.com" title={PRODUCT_NAME} />
+			<div className="grid items-start gap-8 md:grid-cols-2">
+				<div className="gallery">
+					<div className="frame stage">
+						<picture>
+							<source srcSet="/products/pack-box.webp" type="image/webp" />
+							<img
+								className="shot-box"
+								src="/products/pack-box.png"
+								alt="KuabCha tea box, front and side"
+								width={1152}
+								height={1775}
+							/>
+						</picture>
+						<picture>
+							<source srcSet="/products/pack-hero.webp" type="image/webp" />
+							<img
+								className="shot-front"
+								src="/products/pack-hero.png"
+								alt="Front of the KuabCha pack"
+								width={387}
+								height={600}
+							/>
+						</picture>
+						<picture>
+							<source srcSet="/products/pack-back.webp" type="image/webp" />
+							<img
+								className="shot-back"
+								src="/products/pack-back.png"
+								alt="Back of the KuabCha pack, with the net weight"
+								width={390}
+								height={600}
+							/>
+						</picture>
+						<picture>
+							<source srcSet="/products/pack-side.webp" type="image/webp" />
+							<img
+								className="shot-side"
+								src="/products/pack-side.png"
+								alt="Side of the KuabCha pack"
+								width={355}
+								height={600}
+							/>
+						</picture>
+					</div>
+					<div className="thumbs">
+						<label htmlFor="shot-box">
+							<input id="shot-box" type="radio" name="shot" defaultChecked />
+							<img
+								src="/products/pack-box.webp"
+								alt=""
+								width={72}
+								height={72}
+							/>
+						</label>
+						<label htmlFor="shot-front">
+							<input id="shot-front" type="radio" name="shot" />
+							<img
+								src="/products/pack-hero.webp"
+								alt=""
+								width={72}
+								height={72}
+							/>
+						</label>
+						<label htmlFor="shot-back">
+							<input id="shot-back" type="radio" name="shot" />
+							<img
+								src="/products/pack-back.webp"
+								alt=""
+								width={72}
+								height={72}
+							/>
+						</label>
+						<label htmlFor="shot-side">
+							<input id="shot-side" type="radio" name="shot" />
+							<img
+								src="/products/pack-side.webp"
+								alt=""
+								width={72}
+								height={72}
+							/>
+						</label>
+					</div>
+				</div>
+				<div className="grid gap-4">
+					<p className="max-w-2xl">
+						KuabCha is loose-leaf green tea from the Golden Triangle foothills
+						in Chiang Rai, Thailand. The pick is the top 3 leaves. Caffeine is
+						low. Net weight {NET_WEIGHT_LABEL}. Ships in {SHIP_WINDOW}.
 					</p>
-					<label className="text-sm" htmlFor="tea-qty">
-						Packs
-						<input id="tea-qty" className="mt-1 block w-full min-h-11 border border-line bg-paper px-3 py-2" name="qty" type="number" min={1} max={99} defaultValue={1} required />
-					</label>
-					<button className={buttonClass} type="submit">
-						Add to cart
-					</button>
-				</form>
-			) : null}
-			{book.side === "wholesale" ? (
-				<section className="mt-8 max-w-xl border border-line bg-paper p-4" data-testid="wholesale-prices">
-					<h2 className="m-0 font-serif text-3xl font-medium">Wholesale packs</h2>
-					{book.orderable && book.tiers ? (
-						<ul className="mt-4 grid gap-2">
-							{book.tiers.map((tier) => (
-								<li key={tier.label}>
-									{tier.label} at {formatUsd(tier.unitCents)} each
-								</li>
-							))}
-						</ul>
-					) : (
-						<p data-testid="wholesale-pending">This wholesale account is waiting for approval.</p>
-					)}
-					{book.orderable ? (
-						<a className={quietButtonClass} href="/wholesale/order">
-							Place a wholesale order
-						</a>
-					) : null}
-				</section>
-			) : null}
+					<p data-testid="retail-price">
+						One pack is {formatUsd(RETAIL_CENTS)}. A subscription pack is{" "}
+						{formatUsd(SUBSCRIPTION_CENTS)}.
+					</p>
+					<form className="grid max-w-sm gap-4" method="post" action="/cart">
+						<Csrf />
+						<label className="grid text-sm" htmlFor="qty">
+							Packs
+							<input
+								id="qty"
+								className={fieldClass}
+								name="qty"
+								type="number"
+								min={1}
+								max={999}
+								defaultValue={1}
+								required
+							/>
+						</label>
+						<button className={buttonClass} type="submit">
+							Add to cart
+						</button>
+					</form>
+				</div>
+			</div>
 		</Page>
 	);
 }

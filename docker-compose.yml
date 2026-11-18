@@ -1,42 +1,51 @@
-name: hmongtea-crm-d6
+name: hmongtea-crm-d9
 
 services:
   db:
     image: postgres:18.7
     environment:
       POSTGRES_USER: hmongtea
-      POSTGRES_PASSWORD: local-only-db-password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
       POSTGRES_DB: hmongtea
     ports:
-      - "3161:5432"
+      - "127.0.0.1:3298:5432"
+    volumes:
+      - hmongtea-pg:/var/lib/postgresql
     shm_size: 256mb
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U hmongtea -d hmongtea"]
       interval: 2s
       timeout: 5s
       retries: 30
-    volumes:
-      - hmongtea-pg:/var/lib/postgresql
 
-  web:
+  app:
     build: .
     ports:
-      - "3160:3160"
+      - "3299:3299"
+    environment:
+      DATABASE_URL: postgres://hmongtea:${POSTGRES_PASSWORD}@db:5432/hmongtea
+      PORT: "3299"
+      HOST: 0.0.0.0
+      APP_ORIGIN: http://localhost:3299
+      STAFF_EMAIL: ${STAFF_EMAIL:?set STAFF_EMAIL}
+      STAFF_PASSWORD: ${STAFF_PASSWORD:?set STAFF_PASSWORD}
+      CUSTOMER_EMAIL: ${CUSTOMER_EMAIL:-}
+      CUSTOMER_PASSWORD: ${CUSTOMER_PASSWORD:-}
+      PARTNER_EMAIL: ${PARTNER_EMAIL:-}
+      PARTNER_PASSWORD: ${PARTNER_PASSWORD:-}
+      TAX_ID_KEY: ${TAX_ID_KEY:?set TAX_ID_KEY}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      NODE_ENV: production
+    volumes:
+      - hmongtea-data:/data
     depends_on:
       db:
         condition: service_healthy
-    env_file:
-      - .env
-    environment:
-      DATABASE_URL: postgres://hmongtea:local-only-db-password@db:5432/hmongtea
-      ORIGIN: http://127.0.0.1:3160
-      PORT: "3160"
-      HOST: 0.0.0.0
-      NITRO_PORT: "3160"
-      NITRO_HOST: 0.0.0.0
-      COOKIE_SECURE: "1"
-      TRUST_PROXY: "0"
-      NODE_ENV: production
 
 volumes:
   hmongtea-pg:
+  hmongtea-data:

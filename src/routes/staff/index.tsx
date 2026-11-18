@@ -1,41 +1,36 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { loadStaffHome } from "#/fn.ts";
-import { Denied, Page, quietButtonClass, StaffNav } from "#/ui/site.tsx";
+import { loadStaffHome } from "#/server/fns";
+import { Forbidden } from "#/ui/gate";
+import { Page, Title } from "#/ui/site";
 
 export const Route = createFileRoute("/staff/")({
-	head: () => ({ meta: [{ title: "Staff | hmongtea.com" }] }),
+	head: () => ({ meta: [{ title: "Staff, hmongtea.com" }] }),
 	loader: async () => {
-		const data = await loadStaffHome();
-		if (data.kind === "login") throw redirect({ to: "/staff/login" });
-		return data;
+		const page = await loadStaffHome();
+		if (page.kind === "anonymous") throw redirect({ to: "/login" });
+		return page;
 	},
 	component: StaffHome,
 });
 
 function StaffHome() {
-	const data = Route.useLoaderData();
-	if (data.kind !== "ok") return <Denied title="Staff" />;
+	const page = Route.useLoaderData();
+	if (page.kind !== "ok") return <Forbidden />;
 	return (
 		<Page>
-			<StaffNav />
-			<h1 className="font-serif text-5xl font-medium">Staff</h1>
-			<p>
-				{data.preorders} pre-orders on this list. {data.accounts} accounts.
-			</p>
-			<a className={quietButtonClass} href="/staff/export">
-				Export CSV
-			</a>
-			<ul className="mt-6 grid gap-3">
-				{data.orders.map((order) => (
-					<li key={order.id} className="border border-line bg-paper p-4">
-						<Link to="/staff/orders/$id" params={{ id: order.id }} className="text-ink no-underline">
-							{order.number}
-						</Link>
-						<p className="m-0 text-sm text-muted">
-							{order.side} · {order.status} · {order.contactEmail}
-						</p>
-					</li>
-				))}
+			<Title eyebrow="Staff" title="hmongtea.com" />
+			<ul className="grid list-none gap-3 p-0">
+				<li>
+					<Link to="/staff/orders">{page.orders} orders</Link>
+				</li>
+				<li>
+					<Link to="/staff/signups">{page.signups} update sign-ups</Link>
+				</li>
+				<li>
+					<Link to="/staff/wholesale">
+						{page.pending} partner applications waiting
+					</Link>
+				</li>
 			</ul>
 		</Page>
 	);

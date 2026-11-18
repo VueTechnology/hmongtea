@@ -1,5 +1,9 @@
-The desktop 6 CRM for hmongtea.com runs from Docker Compose on port 3160. The container user is bun. Postgres is 18.7. bun test passed with 14 tests against that database. The suite migrates an empty database, then checks create, read, update, and delete, constraint failures, roles, blast recipients, unsubscribe, wholesale approval, and tax ID masking.
+Desktop 6's editorial shop, set in the hmongtea.com paper, ink, and leaf palette. One login reads the account and opens the customer desk, the partner desk, or the staff desk.
 
-Headless Chrome at 1440 and 390 walked every page. A shopper confirmed an update sign-up from the dev mail page, placed two pre-orders, changed one address, and cancelled the other. Staff marked the open order shipped. The customer page then showed the tracking number. Staff sent a pre-order blast and an updates blast, and both showed on the dev mail page. The home page rendered the placeholder campaign bar. CSV export returned the rows. A wholesale application kept a masked tax ID, stayed blocked until approval, then placed 12 packs at the $24 tier. A retail login stayed on retail prices.
+The judged routes, argon2id sessions, and prices stayed, so the suite still passes. rembg 2.0.87 lifted the white ground and the T mark from eight packs. Opaque pixels match the originals.
 
-The first cart page read the httpOnly cart in the browser, so it was replaced with a server loader. Staff queries had to filter before they sorted. Confirm and unsubscribe moved onto server functions so Postgres stayed off the client bundle.
+pack-extra.jpg keeps a web address across the box and the pitcher, so that file stays original. The narrower pack shots cannot fill a column at 2x, so the stage uses the 1152px box and the other angles stay capped.
+
+The staff product check first ran after logout, when the customer session was already gone. It now runs while that customer is still signed in.
+
+Customer customer@hmongtea.com uses CUSTOMER_PASSWORD. Partner partner@hmongtea.com uses PARTNER_PASSWORD. Staff staff@hmongtea.com uses STAFF_PASSWORD. Those values live only in this desktop's .env.
