@@ -1,0 +1,41 @@
+@import "tailwindcss";
+@import "@fontsource/cormorant-garamond/400.css";
+@import "@fontsource/cormorant-garamond/500.css";
+@import "@fontsource/cormorant-garamond/600.css";
+@import "@fontsource/cormorant-garamond/400-italic.css";
+@import "@fontsource/source-sans-3/400.css";
+@import "@fontsource/source-sans-3/600.css";
+
+@theme {
+	--font-serif: "Cormorant Garamond", Georgia, serif;
+	--font-sans: "Source Sans 3", "Segoe UI", sans-serif;
+	--color-ivory: #f7f0ea;
+	--color-paper: #fffaf6;
+	--color-ink: #393837;
+	--color-muted: #5c5148;
+	--color-line: #e4d5c8;
+	--color-gold: #a08b6a;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	margin: 0;
+	background: var(--color-ivory);
+	color: var(--color-ink);
+	font-family: var(--font-sans);
+	font-size: 1.0625rem;
+	line-height: 1.6;
+}
+
+:focus-visible {
+	outline: 2px solid var(--color-ink);
+	outline-offset: 3px;
+}
+
+img {
+	max-width: 100%;
+	height: auto;
+}

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.6.8/schema.json",
+  "files": {
+    "includes": ["src/**", "tests/**", "scripts/**", "drizzle/**", "vite.config.ts"],
+    "ignoreUnknown": true
+  },
+  "formatter": { "enabled": false },
+  "linter": { "enabled": false },
+  "assist": { "enabled": false }
+}

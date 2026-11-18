@@ -1,0 +1,42 @@
+name: hmongtea-crm-d6
+
+services:
+  db:
+    image: postgres:18.7
+    environment:
+      POSTGRES_USER: hmongtea
+      POSTGRES_PASSWORD: local-only-db-password
+      POSTGRES_DB: hmongtea
+    ports:
+      - "3161:5432"
+    shm_size: 256mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hmongtea -d hmongtea"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - hmongtea-pg:/var/lib/postgresql
+
+  web:
+    build: .
+    ports:
+      - "3160:3160"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://hmongtea:local-only-db-password@db:5432/hmongtea
+      ORIGIN: http://127.0.0.1:3160
+      PORT: "3160"
+      HOST: 0.0.0.0
+      NITRO_PORT: "3160"
+      NITRO_HOST: 0.0.0.0
+      COOKIE_SECURE: "1"
+      TRUST_PROXY: "0"
+      NODE_ENV: production
+
+volumes:
+  hmongtea-pg:
