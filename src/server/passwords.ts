@@ -1,9 +1,18 @@
-const OPTIONS = { algorithm: "argon2id" as const, memoryCost: 19456, timeCost: 2 };
-
 export async function hashPassword(password: string): Promise<string> {
-	return Bun.password.hash(password, OPTIONS);
+	return Bun.password.hash(password, {
+		algorithm: "argon2id",
+		memoryCost: 19456,
+		timeCost: 2,
+	});
 }
 
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-	return Bun.password.verify(password, hash);
+export async function verifyPassword(
+	password: string,
+	passwordHash: string,
+): Promise<boolean> {
+	try {
+		return await Bun.password.verify(password, passwordHash);
+	} catch {
+		return false;
+	}
 }

@@ -1,101 +1,101 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { loadPeople } from "#/fn.ts";
-import { noteSearch } from "#/search.ts";
-import { Csrf, fieldClass, Flash, Page, quietButtonClass, StaffNav } from "#/ui/site.tsx";
+import { loadStaffAccountForm } from "#/server/fns";
+import { Forbidden } from "#/ui/gate";
+import { noteSearch } from "#/ui/search";
+import {
+	buttonClass,
+	Csrf,
+	Field,
+	fieldClass,
+	Notes,
+	Page,
+	Title,
+} from "#/ui/site";
 
 export const Route = createFileRoute("/staff/accounts")({
-	head: () => ({ meta: [{ title: "Accounts | hmongtea.com" }] }),
-	validateSearch: (search: Record<string, unknown>) => ({
-		...noteSearch(search),
-		q: typeof search.q === "string" ? search.q.slice(0, 80) : "",
-		side: typeof search.side === "string" ? search.side : "",
-		status: typeof search.status === "string" ? search.status : "",
-	}),
-	loaderDeps: ({ search }) => ({ q: search.q, side: search.side, status: search.status }),
-	loader: async ({ deps }) => {
-		const data = await loadPeople({ data: deps });
-		if (data.kind === "login") throw redirect({ to: "/staff/login" });
-		return data;
+	head: () => ({ meta: [{ title: "New account, hmongtea.com staff" }] }),
+	validateSearch: noteSearch,
+	loader: async () => {
+		const page = await loadStaffAccountForm();
+		if (page.kind === "anonymous") throw redirect({ to: "/login" });
+		return page;
 	},
-	component: AccountsPage,
-	server: {
-		handlers: {
-			POST: async ({ request }) => {
-				const { postPeople } = await import("#/server/post.ts");
-				return postPeople(request);
-			},
-		},
-	},
+	component: NewAccount,
+	server: { handlers: { POST } },
 });
 
-function AccountsPage() {
-	const data = Route.useLoaderData();
-	const search = Route.useSearch();
-	if (data.kind !== "ok") {
-		return (
-			<Page>
-				<h1 className="font-serif text-4xl">Accounts</h1>
-				<p>Staff only.</p>
-			</Page>
-		);
-	}
+async function POST({ request }: { request: Request }) {
+	const { handlePost } = await import("#/server/actions");
+	return handlePost(request);
+}
+
+function NewAccount() {
+	const page = Route.useLoaderData();
+	const notes = Route.useSearch();
+	if (page.kind !== "ok") return <Forbidden />;
 	return (
 		<Page>
-			<StaffNav />
-			<h1 className="font-serif text-5xl font-medium">Accounts</h1>
-			<Flash code={search.error} saved={search.saved === "1"} />
-			<form className="mt-4 flex flex-wrap gap-3" method="get">
-				<input className={fieldClass} name="q" defaultValue={search.q} aria-label="Search accounts" />
-				<select className={fieldClass} name="side" defaultValue={search.side} aria-label="Side">
-					<option value="">Any side</option>
-					<option value="retail">Retail</option>
-					<option value="wholesale">Wholesale</option>
-				</select>
-				<select className={fieldClass} name="status" defaultValue={search.status} aria-label="Status">
-					<option value="">Any status</option>
-					<option value="active">Active</option>
-					<option value="pending">Pending</option>
-					<option value="rejected">Rejected</option>
-				</select>
-				<button className={quietButtonClass} type="submit">
-					Filter
+			<Title eyebrow="Staff" title="New account" />
+			<Notes notes={notes} />
+			<form
+				className="grid max-w-md gap-4"
+				method="post"
+				action="/staff/accounts"
+				data-testid="staff-create-account"
+			>
+				<Csrf />
+				<Field label="Name" name="name" required autoComplete="name" />
+				<Field
+					label="Email"
+					name="email"
+					type="email"
+					required
+					autoComplete="email"
+				/>
+				<Field label="Phone" name="phone" required autoComplete="tel" />
+				<label className="grid text-sm" htmlFor="role">
+					Role
+					<select
+						id="role"
+						className={fieldClass}
+						name="role"
+						required
+						defaultValue="customer"
+					>
+						<option value="customer">Customer</option>
+						<option value="partner">Partner</option>
+					</select>
+				</label>
+				<Field label="Company" name="company" autoComplete="organization" />
+				<label className="grid text-sm" htmlFor="tier">
+					Pricing tier
+					<select id="tier" className={fieldClass} name="tier" defaultValue="">
+						<option value="">None</option>
+						{page.tiers.map((tier) => (
+							<option key={tier.id} value={tier.id}>
+								{tier.label}
+							</option>
+						))}
+					</select>
+				</label>
+				<Field
+					label="Password"
+					name="password"
+					type="password"
+					autoComplete="new-password"
+				/>
+				<label className="flex min-h-11 items-center gap-3 text-sm">
+					<input type="checkbox" name="sendPassword" value="1" />
+					Send a set-password email instead
+				</label>
+				<p className="m-0 text-sm text-muted">
+					Partners need a company and a pricing tier. A password needs 12 or
+					more characters unless you send the set-password email.
+				</p>
+				<button className={buttonClass} type="submit">
+					Create account
 				</button>
 			</form>
-			<ul className="mt-6 grid gap-3">
-				{data.people.map((person) => (
-					<li key={person.id} className="border border-line bg-paper p-4" data-testid="account-row">
-						<p className="m-0 break-all">
-							{person.email} · {person.role} · {person.accountType ?? "staff"} · {person.status}
-						</p>
-						{person.legalName ? <p className="m-0">{person.legalName}</p> : null}
-						{person.taxFull ? <p className="m-0" data-testid="tax-full">Tax ID {person.taxFull}</p> : null}
-						{person.accountType === "wholesale" ? (
-							<form className="mt-3 flex flex-wrap gap-2" method="post">
-								<Csrf />
-								<input type="hidden" name="id" value={person.id} />
-								{person.status === "pending" ? (
-									<button className={quietButtonClass} name="intent" value="approve" type="submit">
-										Approve
-									</button>
-								) : null}
-								{person.status !== "rejected" ? (
-									<button className={quietButtonClass} name="intent" value="reject" type="submit">
-										Reject
-									</button>
-								) : (
-									<button className={quietButtonClass} name="intent" value="delete" type="submit">
-										Delete
-									</button>
-								)}
-								<input type="hidden" name="net_terms" value={person.netTerms ? "0" : "1"} />
-								<button className={quietButtonClass} name="intent" value="net" type="submit">
-									{person.netTerms ? "Clear net terms placeholder" : "Set net terms placeholder"}
-								</button>
-							</form>
-						) : null}
-					</li>
-				))}
-			</ul>
 		</Page>
 	);
 }

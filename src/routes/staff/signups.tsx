@@ -1,70 +1,127 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { loadSignups } from "#/fn.ts";
-import { noteSearch } from "#/search.ts";
-import { buttonClass, Csrf, fieldClass, Flash, Page, quietButtonClass, StaffNav } from "#/ui/site.tsx";
+import { loadStaffSignups } from "#/server/fns";
+import { Forbidden } from "#/ui/gate";
+import { noteSearch } from "#/ui/search";
+import {
+	buttonClass,
+	Csrf,
+	fieldClass,
+	Notes,
+	Page,
+	quietButtonClass,
+	Status,
+	Title,
+} from "#/ui/site";
 
 export const Route = createFileRoute("/staff/signups")({
-	head: () => ({ meta: [{ title: "Sign-ups | hmongtea.com" }] }),
-	validateSearch: (search: Record<string, unknown>) => ({
-		...noteSearch(search),
-		q: typeof search.q === "string" ? search.q.slice(0, 80) : "",
+	head: () => ({ meta: [{ title: "Sign-ups, hmongtea.com staff" }] }),
+	validateSearch: noteSearch,
+	loaderDeps: ({ search }) => ({
+		q: search.q ?? "",
+		side: "",
+		status: search.status ?? "",
 	}),
-	loaderDeps: ({ search }) => ({ q: search.q }),
 	loader: async ({ deps }) => {
-		const data = await loadSignups({ data: deps });
-		if (data.kind === "login") throw redirect({ to: "/staff/login" });
-		return data;
+		const page = await loadStaffSignups({ data: deps });
+		if (page.kind === "anonymous") throw redirect({ to: "/login" });
+		return page;
 	},
-	component: SignupsPage,
-	server: {
-		handlers: {
-			POST: async ({ request }) => {
-				const { postSignups } = await import("#/server/post.ts");
-				return postSignups(request);
-			},
-		},
-	},
+	component: Signups,
+	server: { handlers: { POST } },
 });
 
-function SignupsPage() {
-	const data = Route.useLoaderData();
+async function POST({ request }: { request: Request }) {
+	const { handlePost } = await import("#/server/actions");
+	return handlePost(request);
+}
+
+function Signups() {
+	const page = Route.useLoaderData();
 	const search = Route.useSearch();
-	if (data.kind !== "ok") {
-		return (
-			<Page>
-				<h1 className="font-serif text-4xl">Sign-ups</h1>
-				<p>Staff only.</p>
-			</Page>
-		);
-	}
+	if (page.kind !== "ok") return <Forbidden />;
 	return (
 		<Page>
-			<StaffNav />
-			<h1 className="font-serif text-5xl font-medium">Sign-ups</h1>
-			<Flash code={search.error} saved={search.saved === "1"} />
-			<form className="mt-4 flex gap-3" method="get">
-				<input className={fieldClass} name="q" defaultValue={search.q} aria-label="Search sign-ups" />
-				<button className={quietButtonClass} type="submit">
+			<Title eyebrow="Staff" title="Update sign-ups" />
+			<Notes notes={search} />
+			<form
+				className="flex flex-wrap items-end gap-3"
+				method="get"
+				action="/staff/signups"
+			>
+				<label className="grid text-sm" htmlFor="q">
 					Search
+					<input
+						id="q"
+						className={fieldClass}
+						name="q"
+						defaultValue={search.q ?? ""}
+					/>
+				</label>
+				<label className="grid text-sm" htmlFor="status">
+					Status
+					<select
+						id="status"
+						className={fieldClass}
+						name="status"
+						defaultValue={search.status ?? ""}
+					>
+						<option value="">Any</option>
+						<option value="pending">Pending</option>
+						<option value="confirmed">Confirmed</option>
+						<option value="unsubscribed">Unsubscribed</option>
+					</select>
+				</label>
+				<button className={quietButtonClass} type="submit">
+					Filter
 				</button>
 			</form>
-			<ul className="mt-6 grid gap-3">
-				{data.signups.map((signup) => (
-					<li key={signup.id} className="border border-line bg-paper p-4">
-						<p className="m-0 break-all">
-							{signup.email} · {signup.status}
-						</p>
-						<form className="mt-3 flex flex-wrap gap-3" method="post">
+			<ul className="mt-6 grid list-none gap-4 p-0">
+				{page.signups.map((row) => (
+					<li key={row.id} className="border border-line bg-paper p-4">
+						<form
+							className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto] md:items-end"
+							method="post"
+							action="/staff/signups"
+						>
 							<Csrf />
-							<input type="hidden" name="id" value={signup.id} />
-							<input className={fieldClass} name="name" defaultValue={signup.name} aria-label={`Name for ${signup.email}`} />
-							<button className={quietButtonClass} name="intent" value="save" type="submit">
+							<input type="hidden" name="id" value={row.id} />
+							<label className="grid text-sm" htmlFor={`name-${row.id}`}>
+								{row.email}
+								<input
+									id={`name-${row.id}`}
+									className={fieldClass}
+									name="name"
+									defaultValue={row.name}
+								/>
+							</label>
+							<label className="grid text-sm" htmlFor={`status-${row.id}`}>
+								Status
+								<select
+									id={`status-${row.id}`}
+									className={fieldClass}
+									name="status"
+									defaultValue={row.status}
+								>
+									<option value="pending">Pending</option>
+									<option value="confirmed">Confirmed</option>
+									<option value="unsubscribed">Unsubscribed</option>
+								</select>
+							</label>
+							<button className={buttonClass} type="submit">
 								Save
 							</button>
-							<button className={buttonClass} name="intent" value="delete" type="submit">
+							<button
+								className={quietButtonClass}
+								name="action"
+								value="delete"
+								type="submit"
+							>
 								Delete
 							</button>
 						</form>
+						<p className="m-0 mt-2 text-sm text-muted">
+							<Status value={row.status} />, {row.createdAt.slice(0, 10)}
+						</p>
 					</li>
 				))}
 			</ul>

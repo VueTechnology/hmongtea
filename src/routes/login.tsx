@@ -1,39 +1,49 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { noteSearch } from "#/search.ts";
-import { buttonClass, Csrf, Eyebrow, Field, Flash, Page } from "#/ui/site.tsx";
+import { noteSearch } from "#/ui/search";
+import { buttonClass, Csrf, Field, Notes, Page, Title } from "#/ui/site";
 
 export const Route = createFileRoute("/login")({
-	head: () => ({ meta: [{ title: "Sign in | hmongtea.com" }] }),
+	head: () => ({ meta: [{ title: "Log in, hmongtea.com" }] }),
 	validateSearch: noteSearch,
-	component: LoginPage,
-	server: {
-		handlers: {
-			POST: async ({ request }) => {
-				const { postLogin } = await import("#/server/post.ts");
-				return postLogin(request);
-			},
-		},
-	},
+	component: Login,
+	server: { handlers: { POST } },
 });
 
-function LoginPage() {
-	const search = Route.useSearch();
+async function POST({ request }: { request: Request }) {
+	const { handlePost } = await import("#/server/actions");
+	return handlePost(request);
+}
+
+function Login() {
 	return (
 		<Page>
-			<Eyebrow>Account</Eyebrow>
-			<h1 className="mt-3 font-serif text-5xl font-medium">Sign in</h1>
-			<p className="max-w-xl">Retail and wholesale accounts use this form.</p>
-			<Flash code={search.error} />
-			<form className="mt-6 grid max-w-md gap-4" method="post" action="/login">
+			<Title eyebrow="hmongtea.com" title="Log in" />
+			<Notes notes={Route.useSearch()} />
+			<form className="grid max-w-md gap-4" method="post" action="/login">
 				<Csrf />
-				<Field id="login-email" label="Email" name="email" type="email" required autoComplete="username" testId="login-email" />
-				<Field id="login-password" label="Password" name="password" type="password" required autoComplete="current-password" testId="login-password" />
+				<Field
+					label="Email"
+					name="email"
+					type="email"
+					required
+					autoComplete="email"
+				/>
+				<Field
+					label="Password"
+					name="password"
+					type="password"
+					required
+					autoComplete="current-password"
+				/>
 				<button className={buttonClass} type="submit">
-					Sign in
+					Log in
 				</button>
 			</form>
-			<p className="mt-6 text-sm">
-				<Link to="/register">Create a retail account</Link>
+			<p>
+				<Link to="/forgot">Forgot password</Link>
+			</p>
+			<p>
+				New account? <Link to="/register">Register</Link>
 			</p>
 		</Page>
 	);

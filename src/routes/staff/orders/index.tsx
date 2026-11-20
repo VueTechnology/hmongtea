@@ -1,81 +1,128 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { loadStaffOrders } from "#/fn.ts";
-import { formatUsd } from "#/domain/money.ts";
-import { noteSearch } from "#/search.ts";
-import { fieldClass, Flash, Page, quietButtonClass, StaffNav } from "#/ui/site.tsx";
+import { loadStaffOrders } from "#/server/fns";
+import { Forbidden } from "#/ui/gate";
+import { noteSearch } from "#/ui/search";
+import {
+	fieldClass,
+	Money,
+	Notes,
+	Page,
+	quietButtonClass,
+	Status,
+	Title,
+} from "#/ui/site";
 
 export const Route = createFileRoute("/staff/orders/")({
-	head: () => ({ meta: [{ title: "Pre-orders | hmongtea.com" }] }),
-	validateSearch: (search: Record<string, unknown>) => ({
-		...noteSearch(search),
-		q: typeof search.q === "string" ? search.q.slice(0, 80) : "",
-		status: typeof search.status === "string" ? search.status : "",
-		side: typeof search.side === "string" ? search.side : "",
+	head: () => ({ meta: [{ title: "Orders, hmongtea.com staff" }] }),
+	validateSearch: noteSearch,
+	loaderDeps: ({ search }) => ({
+		q: search.q ?? "",
+		side: search.side ?? "",
+		status: search.status ?? "",
 	}),
-	loaderDeps: ({ search }) => ({ q: search.q, status: search.status, side: search.side }),
 	loader: async ({ deps }) => {
-		const data = await loadStaffOrders({ data: deps });
-		if (data.kind === "login") throw redirect({ to: "/staff/login" });
-		return data;
+		const page = await loadStaffOrders({ data: deps });
+		if (page.kind === "anonymous") throw redirect({ to: "/login" });
+		return page;
 	},
-	component: OrdersPage,
+	component: StaffOrders,
 });
 
-function OrdersPage() {
-	const data = Route.useLoaderData();
+function StaffOrders() {
+	const page = Route.useLoaderData();
 	const search = Route.useSearch();
-	if (data.kind !== "ok") {
-		return (
-			<Page>
-				<h1 className="font-serif text-4xl">Pre-orders</h1>
-				<p>Staff only.</p>
-			</Page>
-		);
-	}
+	if (page.kind !== "ok") return <Forbidden />;
+	const csv = `/api/staff/orders-csv?q=${encodeURIComponent(search.q ?? "")}&side=${encodeURIComponent(search.side ?? "")}&status=${encodeURIComponent(search.status ?? "")}`;
 	return (
 		<Page>
-			<StaffNav />
-			<h1 className="font-serif text-5xl font-medium">Pre-orders</h1>
-			<Flash code={search.error} saved={search.deleted === "1"} />
-			<form className="mt-4 flex flex-wrap gap-3" method="get" action="/staff/orders">
-				<label className="text-sm">
+			<Title eyebrow="Staff" title="Orders" />
+			<Notes notes={search} />
+			<form
+				className="flex flex-wrap items-end gap-3"
+				method="get"
+				action="/staff/orders"
+			>
+				<label className="grid text-sm" htmlFor="q">
 					Search
-					<input className={fieldClass} name="q" defaultValue={search.q} />
+					<input
+						id="q"
+						className={fieldClass}
+						name="q"
+						defaultValue={search.q ?? ""}
+					/>
 				</label>
-				<label className="text-sm">
-					Status
-					<select className={fieldClass} name="status" defaultValue={search.status}>
+				<label className="grid text-sm" htmlFor="side">
+					Side
+					<select
+						id="side"
+						className={fieldClass}
+						name="side"
+						defaultValue={search.side ?? ""}
+					>
 						<option value="">Any</option>
+						<option value="retail">Retail</option>
+						<option value="wholesale">Partner</option>
+					</select>
+				</label>
+				<label className="grid text-sm" htmlFor="status">
+					Status
+					<select
+						id="status"
+						className={fieldClass}
+						name="status"
+						defaultValue={search.status ?? ""}
+					>
+						<option value="">Any</option>
+						<option value="unpaid">Unpaid</option>
 						<option value="placed">Placed</option>
 						<option value="shipped">Shipped</option>
 						<option value="cancelled">Cancelled</option>
 					</select>
 				</label>
-				<label className="text-sm">
-					Side
-					<select className={fieldClass} name="side" defaultValue={search.side}>
-						<option value="">Any</option>
-						<option value="retail">Retail</option>
-						<option value="wholesale">Wholesale</option>
-					</select>
-				</label>
 				<button className={quietButtonClass} type="submit">
 					Filter
 				</button>
+				<a className={quietButtonClass} href={csv}>
+					Export CSV
+				</a>
 			</form>
-			<ul className="mt-6 grid gap-3">
-				{data.orders.map((order) => (
-					<li key={order.id} className="border border-line bg-paper p-4" data-testid="staff-order">
-						<Link to="/staff/orders/$id" params={{ id: order.id }} className="font-serif text-2xl text-ink no-underline">
-							{order.number}
-						</Link>
-						<p className="m-0 text-sm">
-							{order.side} · {order.status} · {order.contactName} · {order.contactEmail} · {formatUsd(order.totalCents)}
-						</p>
-					</li>
-				))}
-			</ul>
-			{data.orders.length === 0 ? <p>No pre-orders match.</p> : null}
+			<div className="mt-6 overflow-x-auto">
+				<table className="w-full border-collapse text-left text-sm">
+					<thead>
+						<tr className="border-b border-line">
+							<th className="py-2 pr-3 font-medium">Date</th>
+							<th className="py-2 pr-3 font-medium">Side</th>
+							<th className="py-2 pr-3 font-medium">Status</th>
+							<th className="py-2 pr-3 font-medium">Email</th>
+							<th className="py-2 pr-3 font-medium">Total</th>
+						</tr>
+					</thead>
+					<tbody>
+						{page.orders.map((order) => (
+							<tr key={order.id} className="border-b border-line">
+								<td className="py-2 pr-3">
+									<Link
+										to="/staff/orders/$orderId"
+										params={{ orderId: order.id }}
+									>
+										{order.createdAt.slice(0, 10)}
+									</Link>
+								</td>
+								<td className="py-2 pr-3">
+									{order.side === "wholesale" ? "Partner" : "Retail"}
+								</td>
+								<td className="py-2 pr-3">
+									<Status value={order.status} />
+								</td>
+								<td className="py-2 pr-3">{order.contactEmail}</td>
+								<td className="py-2 pr-3">
+									<Money cents={order.totalCents} />
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
 		</Page>
 	);
 }

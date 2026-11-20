@@ -11,33 +11,45 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CartRouteImport } from './routes/cart'
-import { Route as CheckoutRouteImport } from './routes/checkout'
-import { Route as HealthRouteImport } from './routes/health'
+import { Route as ForgotRouteImport } from './routes/forgot'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LogoutRouteImport } from './routes/logout'
+import { Route as PartnersRouteImport } from './routes/partners'
+import { Route as PreOrderRouteImport } from './routes/pre-order'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetRouteImport } from './routes/reset'
 import { Route as TeaRouteImport } from './routes/tea'
-import { Route as UpdatesRouteImport } from './routes/updates'
-import { Route as WholesaleRouteImport } from './routes/wholesale'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
+import { Route as CheckoutIndexRouteImport } from './routes/checkout/index'
+import { Route as CheckoutDoneRouteImport } from './routes/checkout/done'
 import { Route as DevMailRouteImport } from './routes/dev/mail'
 import { Route as StaffIndexRouteImport } from './routes/staff/index'
 import { Route as StaffAccountsRouteImport } from './routes/staff/accounts'
 import { Route as StaffAuditRouteImport } from './routes/staff/audit'
 import { Route as StaffBlastsRouteImport } from './routes/staff/blasts'
 import { Route as StaffCampaignRouteImport } from './routes/staff/campaign'
-import { Route as StaffExportRouteImport } from './routes/staff/export'
+import { Route as StaffCustomersRouteImport } from './routes/staff/customers'
 import { Route as StaffLoginRouteImport } from './routes/staff/login'
+import { Route as StaffPasswordResetRouteImport } from './routes/staff/password-reset'
+import { Route as StaffProductsRouteImport } from './routes/staff/products'
 import { Route as StaffSignupsRouteImport } from './routes/staff/signups'
-import { Route as UpdatesConfirmRouteImport } from './routes/updates_.confirm'
-import { Route as UpdatesUnsubscribeRouteImport } from './routes/updates_.unsubscribe'
-import { Route as WholesaleOrderRouteImport } from './routes/wholesale_.order'
-import { Route as WholesaleRegisterRouteImport } from './routes/wholesale_.register'
-import { Route as AccountOrdersIdRouteImport } from './routes/account/orders/$id'
+import { Route as UpdatesIndexRouteImport } from './routes/updates/index'
+import { Route as UpdatesConfirmRouteImport } from './routes/updates/confirm'
+import { Route as WholesaleIndexRouteImport } from './routes/wholesale/index'
+import { Route as WholesaleDeskRouteImport } from './routes/wholesale/desk'
+import { Route as WholesaleLoginRouteImport } from './routes/wholesale/login'
+import { Route as WholesaleOrderRouteImport } from './routes/wholesale/order'
+import { Route as WholesaleRegisterRouteImport } from './routes/wholesale/register'
+import { Route as AccountOrdersOrderIdRouteImport } from './routes/account/orders/$orderId'
+import { Route as ApiStaffOrdersCsvRouteImport } from './routes/api/staff/orders-csv'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
-import { Route as StaffExportDownloadRouteImport } from './routes/staff/export_.download'
 import { Route as StaffOrdersIndexRouteImport } from './routes/staff/orders/index'
-import { Route as StaffOrdersIdRouteImport } from './routes/staff/orders/$id'
+import { Route as StaffOrdersOrderIdRouteImport } from './routes/staff/orders/$orderId'
+import { Route as StaffOrdersNewRouteImport } from './routes/staff/orders/new'
+import { Route as StaffWholesaleIndexRouteImport } from './routes/staff/wholesale/index'
+import { Route as StaffWholesaleAccountIdRouteImport } from './routes/staff/wholesale/$accountId'
+import { Route as WholesaleOrdersOrderIdRouteImport } from './routes/wholesale/orders/$orderId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -49,14 +61,9 @@ const CartRoute = CartRouteImport.update({
   path: '/cart',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CheckoutRoute = CheckoutRouteImport.update({
-  id: '/checkout',
-  path: '/checkout',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HealthRoute = HealthRouteImport.update({
-  id: '/health',
-  path: '/health',
+const ForgotRoute = ForgotRouteImport.update({
+  id: '/forgot',
+  path: '/forgot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -69,9 +76,24 @@ const LogoutRoute = LogoutRouteImport.update({
   path: '/logout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PartnersRoute = PartnersRouteImport.update({
+  id: '/partners',
+  path: '/partners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreOrderRoute = PreOrderRouteImport.update({
+  id: '/pre-order',
+  path: '/pre-order',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetRoute = ResetRouteImport.update({
+  id: '/reset',
+  path: '/reset',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeaRoute = TeaRouteImport.update({
@@ -79,19 +101,24 @@ const TeaRoute = TeaRouteImport.update({
   path: '/tea',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UpdatesRoute = UpdatesRouteImport.update({
-  id: '/updates',
-  path: '/updates',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const WholesaleRoute = WholesaleRouteImport.update({
-  id: '/wholesale',
-  path: '/wholesale',
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountIndexRoute = AccountIndexRouteImport.update({
   id: '/account/',
   path: '/account/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
+  id: '/checkout/',
+  path: '/checkout/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutDoneRoute = CheckoutDoneRouteImport.update({
+  id: '/checkout/done',
+  path: '/checkout/done',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevMailRoute = DevMailRouteImport.update({
@@ -124,9 +151,9 @@ const StaffCampaignRoute = StaffCampaignRouteImport.update({
   path: '/staff/campaign',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StaffExportRoute = StaffExportRouteImport.update({
-  id: '/staff/export',
-  path: '/staff/export',
+const StaffCustomersRoute = StaffCustomersRouteImport.update({
+  id: '/staff/customers',
+  path: '/staff/customers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StaffLoginRoute = StaffLoginRouteImport.update({
@@ -134,34 +161,64 @@ const StaffLoginRoute = StaffLoginRouteImport.update({
   path: '/staff/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffPasswordResetRoute = StaffPasswordResetRouteImport.update({
+  id: '/staff/password-reset',
+  path: '/staff/password-reset',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffProductsRoute = StaffProductsRouteImport.update({
+  id: '/staff/products',
+  path: '/staff/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StaffSignupsRoute = StaffSignupsRouteImport.update({
   id: '/staff/signups',
   path: '/staff/signups',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UpdatesIndexRoute = UpdatesIndexRouteImport.update({
+  id: '/updates/',
+  path: '/updates/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UpdatesConfirmRoute = UpdatesConfirmRouteImport.update({
-  id: '/updates_/confirm',
+  id: '/updates/confirm',
   path: '/updates/confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UpdatesUnsubscribeRoute = UpdatesUnsubscribeRouteImport.update({
-  id: '/updates_/unsubscribe',
-  path: '/updates/unsubscribe',
+const WholesaleIndexRoute = WholesaleIndexRouteImport.update({
+  id: '/wholesale/',
+  path: '/wholesale/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WholesaleDeskRoute = WholesaleDeskRouteImport.update({
+  id: '/wholesale/desk',
+  path: '/wholesale/desk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WholesaleLoginRoute = WholesaleLoginRouteImport.update({
+  id: '/wholesale/login',
+  path: '/wholesale/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WholesaleOrderRoute = WholesaleOrderRouteImport.update({
-  id: '/wholesale_/order',
+  id: '/wholesale/order',
   path: '/wholesale/order',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WholesaleRegisterRoute = WholesaleRegisterRouteImport.update({
-  id: '/wholesale_/register',
+  id: '/wholesale/register',
   path: '/wholesale/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AccountOrdersIdRoute = AccountOrdersIdRouteImport.update({
-  id: '/account/orders/$id',
-  path: '/account/orders/$id',
+const AccountOrdersOrderIdRoute = AccountOrdersOrderIdRouteImport.update({
+  id: '/account/orders/$orderId',
+  path: '/account/orders/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStaffOrdersCsvRoute = ApiStaffOrdersCsvRouteImport.update({
+  id: '/api/staff/orders-csv',
+  path: '/api/staff/orders-csv',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
@@ -169,242 +226,341 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StaffExportDownloadRoute = StaffExportDownloadRouteImport.update({
-  id: '/staff/export_/download',
-  path: '/staff/export/download',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const StaffOrdersIndexRoute = StaffOrdersIndexRouteImport.update({
   id: '/staff/orders/',
   path: '/staff/orders/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StaffOrdersIdRoute = StaffOrdersIdRouteImport.update({
-  id: '/staff/orders/$id',
-  path: '/staff/orders/$id',
+const StaffOrdersOrderIdRoute = StaffOrdersOrderIdRouteImport.update({
+  id: '/staff/orders/$orderId',
+  path: '/staff/orders/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffOrdersNewRoute = StaffOrdersNewRouteImport.update({
+  id: '/staff/orders/new',
+  path: '/staff/orders/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffWholesaleIndexRoute = StaffWholesaleIndexRouteImport.update({
+  id: '/staff/wholesale/',
+  path: '/staff/wholesale/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffWholesaleAccountIdRoute = StaffWholesaleAccountIdRouteImport.update({
+  id: '/staff/wholesale/$accountId',
+  path: '/staff/wholesale/$accountId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WholesaleOrdersOrderIdRoute = WholesaleOrdersOrderIdRouteImport.update({
+  id: '/wholesale/orders/$orderId',
+  path: '/wholesale/orders/$orderId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
-  '/checkout': typeof CheckoutRoute
-  '/health': typeof HealthRoute
+  '/forgot': typeof ForgotRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/partners': typeof PartnersRoute
+  '/pre-order': typeof PreOrderRoute
   '/register': typeof RegisterRoute
+  '/reset': typeof ResetRoute
   '/tea': typeof TeaRoute
-  '/updates': typeof UpdatesRoute
-  '/wholesale': typeof WholesaleRoute
+  '/unsubscribe': typeof UnsubscribeRoute
+  '/checkout/done': typeof CheckoutDoneRoute
   '/dev/mail': typeof DevMailRoute
   '/staff/accounts': typeof StaffAccountsRoute
   '/staff/audit': typeof StaffAuditRoute
   '/staff/blasts': typeof StaffBlastsRoute
   '/staff/campaign': typeof StaffCampaignRoute
-  '/staff/export': typeof StaffExportRoute
+  '/staff/customers': typeof StaffCustomersRoute
   '/staff/login': typeof StaffLoginRoute
+  '/staff/password-reset': typeof StaffPasswordResetRoute
+  '/staff/products': typeof StaffProductsRoute
   '/staff/signups': typeof StaffSignupsRoute
   '/updates/confirm': typeof UpdatesConfirmRoute
-  '/updates/unsubscribe': typeof UpdatesUnsubscribeRoute
+  '/wholesale/desk': typeof WholesaleDeskRoute
+  '/wholesale/login': typeof WholesaleLoginRoute
   '/wholesale/order': typeof WholesaleOrderRoute
   '/wholesale/register': typeof WholesaleRegisterRoute
   '/account/': typeof AccountIndexRoute
+  '/checkout/': typeof CheckoutIndexRoute
   '/staff/': typeof StaffIndexRoute
-  '/account/orders/$id': typeof AccountOrdersIdRoute
+  '/updates/': typeof UpdatesIndexRoute
+  '/wholesale/': typeof WholesaleIndexRoute
+  '/account/orders/$orderId': typeof AccountOrdersOrderIdRoute
+  '/api/staff/orders-csv': typeof ApiStaffOrdersCsvRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
-  '/staff/export/download': typeof StaffExportDownloadRoute
-  '/staff/orders/$id': typeof StaffOrdersIdRoute
+  '/staff/orders/$orderId': typeof StaffOrdersOrderIdRoute
+  '/staff/orders/new': typeof StaffOrdersNewRoute
+  '/staff/wholesale/$accountId': typeof StaffWholesaleAccountIdRoute
+  '/wholesale/orders/$orderId': typeof WholesaleOrdersOrderIdRoute
   '/staff/orders/': typeof StaffOrdersIndexRoute
+  '/staff/wholesale/': typeof StaffWholesaleIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
-  '/checkout': typeof CheckoutRoute
-  '/health': typeof HealthRoute
+  '/forgot': typeof ForgotRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/partners': typeof PartnersRoute
+  '/pre-order': typeof PreOrderRoute
   '/register': typeof RegisterRoute
+  '/reset': typeof ResetRoute
   '/tea': typeof TeaRoute
-  '/updates': typeof UpdatesRoute
-  '/wholesale': typeof WholesaleRoute
+  '/unsubscribe': typeof UnsubscribeRoute
+  '/checkout/done': typeof CheckoutDoneRoute
   '/dev/mail': typeof DevMailRoute
   '/staff/accounts': typeof StaffAccountsRoute
   '/staff/audit': typeof StaffAuditRoute
   '/staff/blasts': typeof StaffBlastsRoute
   '/staff/campaign': typeof StaffCampaignRoute
-  '/staff/export': typeof StaffExportRoute
+  '/staff/customers': typeof StaffCustomersRoute
   '/staff/login': typeof StaffLoginRoute
+  '/staff/password-reset': typeof StaffPasswordResetRoute
+  '/staff/products': typeof StaffProductsRoute
   '/staff/signups': typeof StaffSignupsRoute
   '/updates/confirm': typeof UpdatesConfirmRoute
-  '/updates/unsubscribe': typeof UpdatesUnsubscribeRoute
+  '/wholesale/desk': typeof WholesaleDeskRoute
+  '/wholesale/login': typeof WholesaleLoginRoute
   '/wholesale/order': typeof WholesaleOrderRoute
   '/wholesale/register': typeof WholesaleRegisterRoute
   '/account': typeof AccountIndexRoute
+  '/checkout': typeof CheckoutIndexRoute
   '/staff': typeof StaffIndexRoute
-  '/account/orders/$id': typeof AccountOrdersIdRoute
+  '/updates': typeof UpdatesIndexRoute
+  '/wholesale': typeof WholesaleIndexRoute
+  '/account/orders/$orderId': typeof AccountOrdersOrderIdRoute
+  '/api/staff/orders-csv': typeof ApiStaffOrdersCsvRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
-  '/staff/export/download': typeof StaffExportDownloadRoute
-  '/staff/orders/$id': typeof StaffOrdersIdRoute
+  '/staff/orders/$orderId': typeof StaffOrdersOrderIdRoute
+  '/staff/orders/new': typeof StaffOrdersNewRoute
+  '/staff/wholesale/$accountId': typeof StaffWholesaleAccountIdRoute
+  '/wholesale/orders/$orderId': typeof WholesaleOrdersOrderIdRoute
   '/staff/orders': typeof StaffOrdersIndexRoute
+  '/staff/wholesale': typeof StaffWholesaleIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
-  '/checkout': typeof CheckoutRoute
-  '/health': typeof HealthRoute
+  '/forgot': typeof ForgotRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/partners': typeof PartnersRoute
+  '/pre-order': typeof PreOrderRoute
   '/register': typeof RegisterRoute
+  '/reset': typeof ResetRoute
   '/tea': typeof TeaRoute
-  '/updates': typeof UpdatesRoute
-  '/wholesale': typeof WholesaleRoute
+  '/unsubscribe': typeof UnsubscribeRoute
+  '/checkout/done': typeof CheckoutDoneRoute
   '/dev/mail': typeof DevMailRoute
   '/staff/accounts': typeof StaffAccountsRoute
   '/staff/audit': typeof StaffAuditRoute
   '/staff/blasts': typeof StaffBlastsRoute
   '/staff/campaign': typeof StaffCampaignRoute
-  '/staff/export': typeof StaffExportRoute
+  '/staff/customers': typeof StaffCustomersRoute
   '/staff/login': typeof StaffLoginRoute
+  '/staff/password-reset': typeof StaffPasswordResetRoute
+  '/staff/products': typeof StaffProductsRoute
   '/staff/signups': typeof StaffSignupsRoute
-  '/updates_/confirm': typeof UpdatesConfirmRoute
-  '/updates_/unsubscribe': typeof UpdatesUnsubscribeRoute
-  '/wholesale_/order': typeof WholesaleOrderRoute
-  '/wholesale_/register': typeof WholesaleRegisterRoute
+  '/updates/confirm': typeof UpdatesConfirmRoute
+  '/wholesale/desk': typeof WholesaleDeskRoute
+  '/wholesale/login': typeof WholesaleLoginRoute
+  '/wholesale/order': typeof WholesaleOrderRoute
+  '/wholesale/register': typeof WholesaleRegisterRoute
   '/account/': typeof AccountIndexRoute
+  '/checkout/': typeof CheckoutIndexRoute
   '/staff/': typeof StaffIndexRoute
-  '/account/orders/$id': typeof AccountOrdersIdRoute
+  '/updates/': typeof UpdatesIndexRoute
+  '/wholesale/': typeof WholesaleIndexRoute
+  '/account/orders/$orderId': typeof AccountOrdersOrderIdRoute
+  '/api/staff/orders-csv': typeof ApiStaffOrdersCsvRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
-  '/staff/export_/download': typeof StaffExportDownloadRoute
-  '/staff/orders/$id': typeof StaffOrdersIdRoute
+  '/staff/orders/$orderId': typeof StaffOrdersOrderIdRoute
+  '/staff/orders/new': typeof StaffOrdersNewRoute
+  '/staff/wholesale/$accountId': typeof StaffWholesaleAccountIdRoute
+  '/wholesale/orders/$orderId': typeof WholesaleOrdersOrderIdRoute
   '/staff/orders/': typeof StaffOrdersIndexRoute
+  '/staff/wholesale/': typeof StaffWholesaleIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/cart'
-    | '/checkout'
-    | '/health'
+    | '/forgot'
     | '/login'
     | '/logout'
+    | '/partners'
+    | '/pre-order'
     | '/register'
+    | '/reset'
     | '/tea'
-    | '/updates'
-    | '/wholesale'
+    | '/unsubscribe'
+    | '/checkout/done'
     | '/dev/mail'
     | '/staff/accounts'
     | '/staff/audit'
     | '/staff/blasts'
     | '/staff/campaign'
-    | '/staff/export'
+    | '/staff/customers'
     | '/staff/login'
+    | '/staff/password-reset'
+    | '/staff/products'
     | '/staff/signups'
     | '/updates/confirm'
-    | '/updates/unsubscribe'
+    | '/wholesale/desk'
+    | '/wholesale/login'
     | '/wholesale/order'
     | '/wholesale/register'
     | '/account/'
+    | '/checkout/'
     | '/staff/'
-    | '/account/orders/$id'
+    | '/updates/'
+    | '/wholesale/'
+    | '/account/orders/$orderId'
+    | '/api/staff/orders-csv'
     | '/api/stripe/webhook'
-    | '/staff/export/download'
-    | '/staff/orders/$id'
+    | '/staff/orders/$orderId'
+    | '/staff/orders/new'
+    | '/staff/wholesale/$accountId'
+    | '/wholesale/orders/$orderId'
     | '/staff/orders/'
+    | '/staff/wholesale/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/cart'
-    | '/checkout'
-    | '/health'
+    | '/forgot'
     | '/login'
     | '/logout'
+    | '/partners'
+    | '/pre-order'
     | '/register'
+    | '/reset'
     | '/tea'
-    | '/updates'
-    | '/wholesale'
+    | '/unsubscribe'
+    | '/checkout/done'
     | '/dev/mail'
     | '/staff/accounts'
     | '/staff/audit'
     | '/staff/blasts'
     | '/staff/campaign'
-    | '/staff/export'
+    | '/staff/customers'
     | '/staff/login'
+    | '/staff/password-reset'
+    | '/staff/products'
     | '/staff/signups'
     | '/updates/confirm'
-    | '/updates/unsubscribe'
+    | '/wholesale/desk'
+    | '/wholesale/login'
     | '/wholesale/order'
     | '/wholesale/register'
     | '/account'
+    | '/checkout'
     | '/staff'
-    | '/account/orders/$id'
+    | '/updates'
+    | '/wholesale'
+    | '/account/orders/$orderId'
+    | '/api/staff/orders-csv'
     | '/api/stripe/webhook'
-    | '/staff/export/download'
-    | '/staff/orders/$id'
+    | '/staff/orders/$orderId'
+    | '/staff/orders/new'
+    | '/staff/wholesale/$accountId'
+    | '/wholesale/orders/$orderId'
     | '/staff/orders'
+    | '/staff/wholesale'
   id:
     | '__root__'
     | '/'
     | '/cart'
-    | '/checkout'
-    | '/health'
+    | '/forgot'
     | '/login'
     | '/logout'
+    | '/partners'
+    | '/pre-order'
     | '/register'
+    | '/reset'
     | '/tea'
-    | '/updates'
-    | '/wholesale'
+    | '/unsubscribe'
+    | '/checkout/done'
     | '/dev/mail'
     | '/staff/accounts'
     | '/staff/audit'
     | '/staff/blasts'
     | '/staff/campaign'
-    | '/staff/export'
+    | '/staff/customers'
     | '/staff/login'
+    | '/staff/password-reset'
+    | '/staff/products'
     | '/staff/signups'
-    | '/updates_/confirm'
-    | '/updates_/unsubscribe'
-    | '/wholesale_/order'
-    | '/wholesale_/register'
+    | '/updates/confirm'
+    | '/wholesale/desk'
+    | '/wholesale/login'
+    | '/wholesale/order'
+    | '/wholesale/register'
     | '/account/'
+    | '/checkout/'
     | '/staff/'
-    | '/account/orders/$id'
+    | '/updates/'
+    | '/wholesale/'
+    | '/account/orders/$orderId'
+    | '/api/staff/orders-csv'
     | '/api/stripe/webhook'
-    | '/staff/export_/download'
-    | '/staff/orders/$id'
+    | '/staff/orders/$orderId'
+    | '/staff/orders/new'
+    | '/staff/wholesale/$accountId'
+    | '/wholesale/orders/$orderId'
     | '/staff/orders/'
+    | '/staff/wholesale/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CartRoute: typeof CartRoute
-  CheckoutRoute: typeof CheckoutRoute
-  HealthRoute: typeof HealthRoute
+  ForgotRoute: typeof ForgotRoute
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
+  PartnersRoute: typeof PartnersRoute
+  PreOrderRoute: typeof PreOrderRoute
   RegisterRoute: typeof RegisterRoute
+  ResetRoute: typeof ResetRoute
   TeaRoute: typeof TeaRoute
-  UpdatesRoute: typeof UpdatesRoute
-  WholesaleRoute: typeof WholesaleRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
+  CheckoutDoneRoute: typeof CheckoutDoneRoute
   DevMailRoute: typeof DevMailRoute
   StaffAccountsRoute: typeof StaffAccountsRoute
   StaffAuditRoute: typeof StaffAuditRoute
   StaffBlastsRoute: typeof StaffBlastsRoute
   StaffCampaignRoute: typeof StaffCampaignRoute
-  StaffExportRoute: typeof StaffExportRoute
+  StaffCustomersRoute: typeof StaffCustomersRoute
   StaffLoginRoute: typeof StaffLoginRoute
+  StaffPasswordResetRoute: typeof StaffPasswordResetRoute
+  StaffProductsRoute: typeof StaffProductsRoute
   StaffSignupsRoute: typeof StaffSignupsRoute
   UpdatesConfirmRoute: typeof UpdatesConfirmRoute
-  UpdatesUnsubscribeRoute: typeof UpdatesUnsubscribeRoute
+  WholesaleDeskRoute: typeof WholesaleDeskRoute
+  WholesaleLoginRoute: typeof WholesaleLoginRoute
   WholesaleOrderRoute: typeof WholesaleOrderRoute
   WholesaleRegisterRoute: typeof WholesaleRegisterRoute
   AccountIndexRoute: typeof AccountIndexRoute
+  CheckoutIndexRoute: typeof CheckoutIndexRoute
   StaffIndexRoute: typeof StaffIndexRoute
-  AccountOrdersIdRoute: typeof AccountOrdersIdRoute
+  UpdatesIndexRoute: typeof UpdatesIndexRoute
+  WholesaleIndexRoute: typeof WholesaleIndexRoute
+  AccountOrdersOrderIdRoute: typeof AccountOrdersOrderIdRoute
+  ApiStaffOrdersCsvRoute: typeof ApiStaffOrdersCsvRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
-  StaffExportDownloadRoute: typeof StaffExportDownloadRoute
-  StaffOrdersIdRoute: typeof StaffOrdersIdRoute
+  StaffOrdersOrderIdRoute: typeof StaffOrdersOrderIdRoute
+  StaffOrdersNewRoute: typeof StaffOrdersNewRoute
+  StaffWholesaleAccountIdRoute: typeof StaffWholesaleAccountIdRoute
+  WholesaleOrdersOrderIdRoute: typeof WholesaleOrdersOrderIdRoute
   StaffOrdersIndexRoute: typeof StaffOrdersIndexRoute
+  StaffWholesaleIndexRoute: typeof StaffWholesaleIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -423,18 +579,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/checkout': {
-      id: '/checkout'
-      path: '/checkout'
-      fullPath: '/checkout'
-      preLoaderRoute: typeof CheckoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/health': {
-      id: '/health'
-      path: '/health'
-      fullPath: '/health'
-      preLoaderRoute: typeof HealthRouteImport
+    '/forgot': {
+      id: '/forgot'
+      path: '/forgot'
+      fullPath: '/forgot'
+      preLoaderRoute: typeof ForgotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -451,11 +600,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LogoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/partners': {
+      id: '/partners'
+      path: '/partners'
+      fullPath: '/partners'
+      preLoaderRoute: typeof PartnersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pre-order': {
+      id: '/pre-order'
+      path: '/pre-order'
+      fullPath: '/pre-order'
+      preLoaderRoute: typeof PreOrderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset': {
+      id: '/reset'
+      path: '/reset'
+      fullPath: '/reset'
+      preLoaderRoute: typeof ResetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tea': {
@@ -465,18 +635,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/updates': {
-      id: '/updates'
-      path: '/updates'
-      fullPath: '/updates'
-      preLoaderRoute: typeof UpdatesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/wholesale': {
-      id: '/wholesale'
-      path: '/wholesale'
-      fullPath: '/wholesale'
-      preLoaderRoute: typeof WholesaleRouteImport
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account/': {
@@ -484,6 +647,20 @@ declare module '@tanstack/react-router' {
       path: '/account'
       fullPath: '/account/'
       preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/': {
+      id: '/checkout/'
+      path: '/checkout'
+      fullPath: '/checkout/'
+      preLoaderRoute: typeof CheckoutIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/done': {
+      id: '/checkout/done'
+      path: '/checkout/done'
+      fullPath: '/checkout/done'
+      preLoaderRoute: typeof CheckoutDoneRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dev/mail': {
@@ -528,11 +705,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffCampaignRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/staff/export': {
-      id: '/staff/export'
-      path: '/staff/export'
-      fullPath: '/staff/export'
-      preLoaderRoute: typeof StaffExportRouteImport
+    '/staff/customers': {
+      id: '/staff/customers'
+      path: '/staff/customers'
+      fullPath: '/staff/customers'
+      preLoaderRoute: typeof StaffCustomersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/staff/login': {
@@ -542,6 +719,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff/password-reset': {
+      id: '/staff/password-reset'
+      path: '/staff/password-reset'
+      fullPath: '/staff/password-reset'
+      preLoaderRoute: typeof StaffPasswordResetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff/products': {
+      id: '/staff/products'
+      path: '/staff/products'
+      fullPath: '/staff/products'
+      preLoaderRoute: typeof StaffProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/staff/signups': {
       id: '/staff/signups'
       path: '/staff/signups'
@@ -549,39 +740,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffSignupsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/updates_/confirm': {
-      id: '/updates_/confirm'
+    '/updates/': {
+      id: '/updates/'
+      path: '/updates'
+      fullPath: '/updates/'
+      preLoaderRoute: typeof UpdatesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/updates/confirm': {
+      id: '/updates/confirm'
       path: '/updates/confirm'
       fullPath: '/updates/confirm'
       preLoaderRoute: typeof UpdatesConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/updates_/unsubscribe': {
-      id: '/updates_/unsubscribe'
-      path: '/updates/unsubscribe'
-      fullPath: '/updates/unsubscribe'
-      preLoaderRoute: typeof UpdatesUnsubscribeRouteImport
+    '/wholesale/': {
+      id: '/wholesale/'
+      path: '/wholesale'
+      fullPath: '/wholesale/'
+      preLoaderRoute: typeof WholesaleIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/wholesale_/order': {
-      id: '/wholesale_/order'
+    '/wholesale/desk': {
+      id: '/wholesale/desk'
+      path: '/wholesale/desk'
+      fullPath: '/wholesale/desk'
+      preLoaderRoute: typeof WholesaleDeskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wholesale/login': {
+      id: '/wholesale/login'
+      path: '/wholesale/login'
+      fullPath: '/wholesale/login'
+      preLoaderRoute: typeof WholesaleLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wholesale/order': {
+      id: '/wholesale/order'
       path: '/wholesale/order'
       fullPath: '/wholesale/order'
       preLoaderRoute: typeof WholesaleOrderRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/wholesale_/register': {
-      id: '/wholesale_/register'
+    '/wholesale/register': {
+      id: '/wholesale/register'
       path: '/wholesale/register'
       fullPath: '/wholesale/register'
       preLoaderRoute: typeof WholesaleRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/account/orders/$id': {
-      id: '/account/orders/$id'
-      path: '/account/orders/$id'
-      fullPath: '/account/orders/$id'
-      preLoaderRoute: typeof AccountOrdersIdRouteImport
+    '/account/orders/$orderId': {
+      id: '/account/orders/$orderId'
+      path: '/account/orders/$orderId'
+      fullPath: '/account/orders/$orderId'
+      preLoaderRoute: typeof AccountOrdersOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/staff/orders-csv': {
+      id: '/api/staff/orders-csv'
+      path: '/api/staff/orders-csv'
+      fullPath: '/api/staff/orders-csv'
+      preLoaderRoute: typeof ApiStaffOrdersCsvRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/stripe/webhook': {
@@ -591,13 +810,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/staff/export_/download': {
-      id: '/staff/export_/download'
-      path: '/staff/export/download'
-      fullPath: '/staff/export/download'
-      preLoaderRoute: typeof StaffExportDownloadRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/staff/orders/': {
       id: '/staff/orders/'
       path: '/staff/orders'
@@ -605,11 +817,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffOrdersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/staff/orders/$id': {
-      id: '/staff/orders/$id'
-      path: '/staff/orders/$id'
-      fullPath: '/staff/orders/$id'
-      preLoaderRoute: typeof StaffOrdersIdRouteImport
+    '/staff/orders/$orderId': {
+      id: '/staff/orders/$orderId'
+      path: '/staff/orders/$orderId'
+      fullPath: '/staff/orders/$orderId'
+      preLoaderRoute: typeof StaffOrdersOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff/orders/new': {
+      id: '/staff/orders/new'
+      path: '/staff/orders/new'
+      fullPath: '/staff/orders/new'
+      preLoaderRoute: typeof StaffOrdersNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff/wholesale/': {
+      id: '/staff/wholesale/'
+      path: '/staff/wholesale'
+      fullPath: '/staff/wholesale/'
+      preLoaderRoute: typeof StaffWholesaleIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff/wholesale/$accountId': {
+      id: '/staff/wholesale/$accountId'
+      path: '/staff/wholesale/$accountId'
+      fullPath: '/staff/wholesale/$accountId'
+      preLoaderRoute: typeof StaffWholesaleAccountIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wholesale/orders/$orderId': {
+      id: '/wholesale/orders/$orderId'
+      path: '/wholesale/orders/$orderId'
+      fullPath: '/wholesale/orders/$orderId'
+      preLoaderRoute: typeof WholesaleOrdersOrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -618,33 +858,45 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CartRoute: CartRoute,
-  CheckoutRoute: CheckoutRoute,
-  HealthRoute: HealthRoute,
+  ForgotRoute: ForgotRoute,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
+  PartnersRoute: PartnersRoute,
+  PreOrderRoute: PreOrderRoute,
   RegisterRoute: RegisterRoute,
+  ResetRoute: ResetRoute,
   TeaRoute: TeaRoute,
-  UpdatesRoute: UpdatesRoute,
-  WholesaleRoute: WholesaleRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
+  CheckoutDoneRoute: CheckoutDoneRoute,
   DevMailRoute: DevMailRoute,
   StaffAccountsRoute: StaffAccountsRoute,
   StaffAuditRoute: StaffAuditRoute,
   StaffBlastsRoute: StaffBlastsRoute,
   StaffCampaignRoute: StaffCampaignRoute,
-  StaffExportRoute: StaffExportRoute,
+  StaffCustomersRoute: StaffCustomersRoute,
   StaffLoginRoute: StaffLoginRoute,
+  StaffPasswordResetRoute: StaffPasswordResetRoute,
+  StaffProductsRoute: StaffProductsRoute,
   StaffSignupsRoute: StaffSignupsRoute,
   UpdatesConfirmRoute: UpdatesConfirmRoute,
-  UpdatesUnsubscribeRoute: UpdatesUnsubscribeRoute,
+  WholesaleDeskRoute: WholesaleDeskRoute,
+  WholesaleLoginRoute: WholesaleLoginRoute,
   WholesaleOrderRoute: WholesaleOrderRoute,
   WholesaleRegisterRoute: WholesaleRegisterRoute,
   AccountIndexRoute: AccountIndexRoute,
+  CheckoutIndexRoute: CheckoutIndexRoute,
   StaffIndexRoute: StaffIndexRoute,
-  AccountOrdersIdRoute: AccountOrdersIdRoute,
+  UpdatesIndexRoute: UpdatesIndexRoute,
+  WholesaleIndexRoute: WholesaleIndexRoute,
+  AccountOrdersOrderIdRoute: AccountOrdersOrderIdRoute,
+  ApiStaffOrdersCsvRoute: ApiStaffOrdersCsvRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
-  StaffExportDownloadRoute: StaffExportDownloadRoute,
-  StaffOrdersIdRoute: StaffOrdersIdRoute,
+  StaffOrdersOrderIdRoute: StaffOrdersOrderIdRoute,
+  StaffOrdersNewRoute: StaffOrdersNewRoute,
+  StaffWholesaleAccountIdRoute: StaffWholesaleAccountIdRoute,
+  WholesaleOrdersOrderIdRoute: WholesaleOrdersOrderIdRoute,
   StaffOrdersIndexRoute: StaffOrdersIndexRoute,
+  StaffWholesaleIndexRoute: StaffWholesaleIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

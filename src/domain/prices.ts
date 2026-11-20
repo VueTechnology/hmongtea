@@ -1,52 +1,61 @@
-// Shop schedule for one KuabCha pack.
 export const RETAIL_CENTS = 3200;
-export const MOQ = 12;
-export const SKU = "kuabcha";
-export const PRODUCT_NAME = "KuabCha loose-leaf green tea";
+export const SUBSCRIPTION_CENTS = 3000;
+export const NET_WEIGHT_LABEL = "4.4 oz (125 g)";
+export const SHIP_WINDOW = "5 to 7 business days";
 
-export const TIERS = [
+export const MOQ = 12;
+export const WHOLESALE_TIERS = [
 	{ minQty: 12, maxQty: 23, unitCents: 2400, label: "12 to 23 packs" },
 	{ minQty: 24, maxQty: 47, unitCents: 2200, label: "24 to 47 packs" },
 	{ minQty: 48, maxQty: null, unitCents: 2000, label: "48 or more packs" },
 ] as const;
 
-export type Side = "retail" | "wholesale";
+export const PARTNER_TIERS = [
+	{
+		id: "case",
+		unitCents: WHOLESALE_TIERS[0].unitCents,
+		label: WHOLESALE_TIERS[0].label,
+	},
+	{
+		id: "half",
+		unitCents: WHOLESALE_TIERS[1].unitCents,
+		label: WHOLESALE_TIERS[1].label,
+	},
+	{
+		id: "pallet",
+		unitCents: WHOLESALE_TIERS[2].unitCents,
+		label: WHOLESALE_TIERS[2].label,
+	},
+] as const;
 
-export type Quote = {
-	side: Side;
-	qty: number;
-	unitCents: number;
-	totalCents: number;
-	tierLabel: string;
-};
+export type PartnerTierId = (typeof PARTNER_TIERS)[number]["id"];
 
-export function wholesaleTier(qty: number) {
-	return TIERS.find((tier) => qty >= tier.minQty && (tier.maxQty === null || qty <= tier.maxQty)) ?? null;
+export function parsePartnerTier(value: unknown): PartnerTierId | null {
+	if (value === "case" || value === "half" || value === "pallet") return value;
+	return null;
 }
 
-export function quote(side: Side, qty: number): Quote | null {
-	if (!Number.isInteger(qty) || qty < 1 || qty > 999) return null;
-	if (side === "retail") {
-		return { side, qty, unitCents: RETAIL_CENTS, totalCents: RETAIL_CENTS * qty, tierLabel: "Retail pack" };
-	}
-	const tier = wholesaleTier(qty);
-	if (!tier) return null;
-	return { side, qty, unitCents: tier.unitCents, totalCents: tier.unitCents * qty, tierLabel: tier.label };
+export function partnerTierCents(id: PartnerTierId): number {
+	const tier = PARTNER_TIERS.find((item) => item.id === id);
+	if (!tier) throw new Error("Unknown partner tier");
+	return tier.unitCents;
 }
 
-export type PriceBook = {
-	side: Side;
-	orderable: boolean;
-	unitCents: number | null;
-	tiers: typeof TIERS | null;
-};
+export const MAX_QTY = 999;
 
-export function priceBook(account: { accountType: Side; status: string }): PriceBook {
-	if (account.accountType === "retail") {
-		return { side: "retail", orderable: account.status === "active", unitCents: RETAIL_CENTS, tiers: null };
+export const PRODUCT_SKU = "KUABCHA-PACK";
+export const PRODUCT_NAME = "KuabCha loose-leaf green tea";
+
+export function wholesaleUnit(qty: number): number | null {
+	if (!Number.isInteger(qty) || qty < MOQ || qty > MAX_QTY) return null;
+	let unit: number = WHOLESALE_TIERS[0].unitCents;
+	for (const tier of WHOLESALE_TIERS) {
+		if (qty >= tier.minQty) unit = tier.unitCents;
 	}
-	if (account.status !== "active") {
-		return { side: "wholesale", orderable: false, unitCents: null, tiers: null };
-	}
-	return { side: "wholesale", orderable: true, unitCents: null, tiers: TIERS };
+	return unit;
+}
+
+export function retailUnit(qty: number): number | null {
+	if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY) return null;
+	return RETAIL_CENTS;
 }

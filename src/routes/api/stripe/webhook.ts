@@ -4,8 +4,8 @@ export const Route = createFileRoute("/api/stripe/webhook")({
 	server: {
 		handlers: {
 			POST: async ({ request }) => {
-				const { postStripe } = await import("#/server/post.ts");
-				return postStripe(request);
+				const { handleWebhook } = await import("#/server/actions");
+				return handleWebhook(request);
 			},
 		},
 	},

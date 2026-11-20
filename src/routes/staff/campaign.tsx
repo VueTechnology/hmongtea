@@ -1,52 +1,71 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { loadCampaign } from "#/fn.ts";
-import { formatUsd } from "#/domain/money.ts";
-import { noteSearch } from "#/search.ts";
-import { buttonClass, Csrf, Field, Flash, Page, StaffNav } from "#/ui/site.tsx";
+import { formatUsd } from "#/domain/money";
+import { loadStaffCampaign } from "#/server/fns";
+import { Forbidden } from "#/ui/gate";
+import { noteSearch } from "#/ui/search";
+import { buttonClass, Csrf, fieldClass, Notes, Page, Title } from "#/ui/site";
 
 export const Route = createFileRoute("/staff/campaign")({
-	head: () => ({ meta: [{ title: "Campaign placeholder | hmongtea.com" }] }),
+	head: () => ({ meta: [{ title: "Campaign, hmongtea.com staff" }] }),
 	validateSearch: noteSearch,
 	loader: async () => {
-		const data = await loadCampaign();
-		if (data.kind === "login") throw redirect({ to: "/staff/login" });
-		return data;
+		const page = await loadStaffCampaign();
+		if (page.kind === "anonymous") throw redirect({ to: "/login" });
+		return page;
 	},
-	component: CampaignPage,
-	server: {
-		handlers: {
-			POST: async ({ request }) => {
-				const { postCampaign } = await import("#/server/post.ts");
-				return postCampaign(request);
-			},
-		},
-	},
+	component: Campaign,
+	server: { handlers: { POST } },
 });
 
-function CampaignPage() {
-	const data = Route.useLoaderData();
-	const search = Route.useSearch();
-	if (data.kind !== "ok") {
-		return (
-			<Page>
-				<h1 className="font-serif text-4xl">Campaign</h1>
-				<p>Staff only.</p>
-			</Page>
-		);
-	}
+async function POST({ request }: { request: Request }) {
+	const { handlePost } = await import("#/server/actions");
+	return handlePost(request);
+}
+
+function Campaign() {
+	const page = Route.useLoaderData();
+	const notes = Route.useSearch();
+	if (page.kind !== "ok") return <Forbidden />;
 	return (
 		<Page>
-			<StaffNav />
-			<h1 className="font-serif text-5xl font-medium">Campaign placeholder</h1>
-			<p data-testid="campaign-placeholder">Placeholder. Not a live Kickstarter total. The label on the row stays placeholder.</p>
+			<Title eyebrow="Staff" title="Kickstarter placeholder" />
+			<Notes notes={notes} />
 			<p>
-				Now showing {formatUsd(data.raisedCents)} of {formatUsd(data.targetCents)}.
+				Placeholder. These figures are sample numbers stored for the public
+				page. They are not a live campaign. Saving keeps the placeholder mark.
 			</p>
-			<Flash code={search.error} saved={search.saved === "1"} />
-			<form className="mt-6 grid max-w-md gap-4" method="post">
+			<p>
+				Current sample, {formatUsd(page.raisedCents)} of{" "}
+				{formatUsd(page.targetCents)}.
+			</p>
+			<form
+				className="grid max-w-sm gap-4"
+				method="post"
+				action="/staff/campaign"
+			>
 				<Csrf />
-				<Field id="target" label="Target in dollars" name="target" required defaultValue={(data.targetCents / 100).toFixed(2)} testId="campaign-target" />
-				<Field id="raised" label="Raised in dollars" name="raised" required defaultValue={(data.raisedCents / 100).toFixed(2)} testId="campaign-raised" />
+				<label className="grid text-sm" htmlFor="target">
+					Target in whole dollars
+					<input
+						id="target"
+						className={fieldClass}
+						name="target"
+						inputMode="numeric"
+						defaultValue={String(Math.round(page.targetCents / 100))}
+						required
+					/>
+				</label>
+				<label className="grid text-sm" htmlFor="raised">
+					Raised in whole dollars
+					<input
+						id="raised"
+						className={fieldClass}
+						name="raised"
+						inputMode="numeric"
+						defaultValue={String(Math.round(page.raisedCents / 100))}
+						required
+					/>
+				</label>
 				<button className={buttonClass} type="submit">
 					Save placeholder
 				</button>

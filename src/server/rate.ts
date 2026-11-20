@@ -1,21 +1,25 @@
-import { getSql } from "./db.ts";
-import { AppError } from "./errors.ts";
+import { sql } from "drizzle-orm";
+import type { Database } from "#/db/client";
 
-export const LOGIN_LIMIT = 8;
-export const SIGNUP_LIMIT = 5;
-
-export async function hitLimit(bucket: string, limit: number) {
-	const sql = getSql();
-	const rows = await sql<{ count: number }[]>`
-		insert into rate_limits (bucket, window_start, count)
-		values (
-			${bucket},
-			to_timestamp(floor(extract(epoch from now()) / 900) * 900),
-			1
-		)
-		on conflict (bucket, window_start)
-		do update set count = rate_limits.count + 1
-		returning count
-	`;
-	if ((rows[0]?.count ?? 1) > limit) throw new AppError("rate_limit", "Too many attempts.", "rate");
+export async function consumeRateLimit(
+	db: Database,
+	bucket: string,
+	_max: number,
+): Promise<number> {
+	const rows = await db.execute<{ hits: number }>(sql`
+		insert into rate_limits (bucket, hits, window_start)
+		values (${bucket}, 1, now())
+		on conflict (bucket) do update set
+			hits = case
+				when rate_limits.window_start < now() - interval '15 minutes' then 1
+				else rate_limits.hits + 1
+			end,
+			window_start = case
+				when rate_limits.window_start < now() - interval '15 minutes' then now()
+				else rate_limits.window_start
+			end
+		returning hits
+	`);
+	const first = Array.isArray(rows) ? rows[0] : undefined;
+	return Number(first?.hits ?? 0);
 }

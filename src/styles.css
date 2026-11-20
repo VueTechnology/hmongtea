@@ -1,41 +1,314 @@
 @import "tailwindcss";
-@import "@fontsource/cormorant-garamond/400.css";
-@import "@fontsource/cormorant-garamond/500.css";
-@import "@fontsource/cormorant-garamond/600.css";
-@import "@fontsource/cormorant-garamond/400-italic.css";
-@import "@fontsource/source-sans-3/400.css";
-@import "@fontsource/source-sans-3/600.css";
+@import "@fontsource/fraunces/latin-500.css";
+@import "@fontsource/fraunces/latin-700.css";
+@import "@fontsource/figtree/latin-400.css";
+@import "@fontsource/figtree/latin-600.css";
 
 @theme {
-	--font-serif: "Cormorant Garamond", Georgia, serif;
-	--font-sans: "Source Sans 3", "Segoe UI", sans-serif;
-	--color-ivory: #f7f0ea;
-	--color-paper: #fffaf6;
-	--color-ink: #393837;
-	--color-muted: #5c5148;
-	--color-line: #e4d5c8;
-	--color-gold: #a08b6a;
+	--font-serif: "Fraunces", Georgia, serif;
+	--font-sans: "Figtree", "Segoe UI", sans-serif;
+	--color-ivory: oklch(0.965 0.014 95);
+	--color-paper: oklch(0.98 0.008 95);
+	--color-ink: oklch(0.28 0.03 160);
+	--color-muted: oklch(0.4 0.03 160);
+	--color-line: oklch(0.86 0.02 110);
+	--color-gold: oklch(0.4 0.07 150);
+	--color-leaf: oklch(0.4 0.07 150);
+	--color-clay: oklch(0.42 0.12 35);
+	--color-moss: oklch(0.94 0.025 145);
+	--color-button: oklch(0.3 0.04 160);
+	--color-button-text: oklch(0.98 0.005 95);
+}
+
+.theme-wholesale {
+	--color-gold: oklch(0.4 0.07 150);
 }
 
 html {
+	font-size: clamp(1rem, 0.94rem + 0.25vw, 1.125rem);
 	scroll-behavior: smooth;
+	background: var(--color-ivory);
+	color: var(--color-ink);
 }
 
 body {
 	margin: 0;
+	min-height: 100vh;
 	background: var(--color-ivory);
 	color: var(--color-ink);
 	font-family: var(--font-sans);
-	font-size: 1.0625rem;
-	line-height: 1.6;
+	line-height: 1.55;
 }
 
 :focus-visible {
-	outline: 2px solid var(--color-ink);
-	outline-offset: 3px;
+	outline: 2px solid var(--color-leaf);
+	outline-offset: 2px;
 }
 
 img {
 	max-width: 100%;
 	height: auto;
+	display: block;
+}
+
+.skip {
+	position: absolute;
+	left: 0.75rem;
+	top: -4rem;
+	background: var(--color-button);
+	color: var(--color-button-text);
+	padding: 0.6rem 0.9rem;
+	z-index: 5;
+}
+
+.skip:focus {
+	top: 0.75rem;
+}
+
+.topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.85rem 1.25rem;
+	border-bottom: 1px solid var(--color-line);
+	background: oklch(0.975 0.01 95);
+	position: sticky;
+	top: 0;
+	z-index: 3;
+}
+
+.brand-row {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+}
+
+.wordmark {
+	font-family: var(--font-serif);
+	font-size: 1.45rem;
+	font-weight: 500;
+	letter-spacing: -0.02em;
+	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	color: inherit;
+}
+
+.mark {
+	width: 1.55rem;
+	height: 1.55rem;
+}
+
+.desk,
+.phone nav {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem 0.85rem;
+}
+
+.desk a,
+.phone nav a,
+.menu-button {
+	min-height: 44px;
+	display: inline-flex;
+	align-items: center;
+}
+
+.phone {
+	display: none;
+}
+
+.menu-button {
+	list-style: none;
+	cursor: pointer;
+	padding: 0.4rem 0.7rem;
+	border: 1px solid var(--color-muted);
+	border-radius: 999px;
+}
+
+.menu-button::-webkit-details-marker {
+	display: none;
+}
+
+.channel-label {
+	border: 1px solid var(--color-gold);
+	border-radius: 999px;
+	padding: 0.2rem 0.55rem;
+	font-size: 0.75rem;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--color-leaf);
+}
+
+.goldbar {
+	width: 3.5rem;
+	height: 3px;
+	background: var(--color-gold);
+	margin: 0.55rem 0 0.2rem;
+}
+
+.wrap {
+	width: min(1120px, calc(100% - 2rem));
+	margin: 0 auto;
+}
+
+footer {
+	border-top: 1px solid var(--color-line);
+	padding: 1.4rem 0 2.4rem;
+	color: var(--color-muted);
+}
+
+.footer-row {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+}
+
+.footer-logo {
+	width: 3.5rem;
+	height: 3.5rem;
+	border-radius: 999px;
+	object-fit: cover;
+}
+
+.stack {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	align-items: center;
+}
+
+.gallery {
+	display: grid;
+	gap: 0.8rem;
+}
+
+.stage {
+	background: var(--color-moss);
+	border-radius: 1.5rem;
+	padding: 1.25rem;
+	box-shadow: 0 18px 40px oklch(0.28 0.03 160 / 0.12);
+}
+
+.stage img {
+	width: 100%;
+	height: auto;
+	object-fit: contain;
+	background: transparent;
+}
+
+.gallery .frame img,
+.gallery .frame picture {
+	display: none;
+	width: 100%;
+}
+
+.gallery .frame img.shot-front,
+.gallery .frame img.shot-back,
+.gallery .frame img.shot-side {
+	width: auto;
+	margin-inline: auto;
+}
+
+.gallery .frame img.shot-front {
+	max-width: min(100%, 193px);
+}
+
+.gallery .frame img.shot-back {
+	max-width: min(100%, 195px);
+}
+
+.gallery .frame img.shot-side {
+	max-width: min(100%, 177px);
+}
+
+.gallery .frame img {
+	border-radius: 1rem;
+}
+
+.gallery:not(:has(input:checked)) img.shot-box,
+.gallery:not(:has(input:checked)) picture:has(img.shot-box),
+.gallery:has(#shot-box:checked) img.shot-box,
+.gallery:has(#shot-box:checked) picture:has(img.shot-box),
+.gallery:has(#shot-front:checked) img.shot-front,
+.gallery:has(#shot-front:checked) picture:has(img.shot-front),
+.gallery:has(#shot-back:checked) img.shot-back,
+.gallery:has(#shot-back:checked) picture:has(img.shot-back),
+.gallery:has(#shot-side:checked) img.shot-side,
+.gallery:has(#shot-side:checked) picture:has(img.shot-side) {
+	display: block;
+}
+
+.thumbs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.thumbs label {
+	width: 4.5rem;
+	border: 2px solid transparent;
+	border-radius: 0.7rem;
+	overflow: hidden;
+	background: white;
+}
+
+.gallery:has(#shot-box:checked) label[for="shot-box"],
+.gallery:has(#shot-front:checked) label[for="shot-front"],
+.gallery:has(#shot-back:checked) label[for="shot-back"],
+.gallery:has(#shot-side:checked) label[for="shot-side"] {
+	border-color: var(--color-leaf);
+}
+
+.thumbs input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+}
+
+.thumbs img {
+	width: 100%;
+	height: 4.2rem;
+	object-fit: contain;
+	background: var(--color-moss);
+	display: block;
+}
+
+@media (max-width: 760px) {
+	.desk {
+		display: none;
+	}
+
+	.phone {
+		display: block;
+	}
+
+	.phone nav {
+		display: grid;
+		padding-top: 0.6rem;
+	}
+
+	.wordmark {
+		font-size: 1.15rem;
+	}
+
+	.footer-row {
+		align-items: flex-start;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
 }
