@@ -128,13 +128,9 @@ export function SiteFrame({ children }: { children: ReactNode }) {
 					<img
 						className="footer-logo"
 						src="/brand/logo-nthn.jpg"
-						alt="Listing logo from niamtxojhmoo.com"
+						alt="Niam Txoj Hmoo"
 					/>
 					<div className="stack">
-						<p className="m-0">
-							Pack photos come from the current KuabCha listing at
-							niamtxojhmoo.com. hmongtea.com did not change that site.
-						</p>
 						<p className="row m-0">
 							{shell.demoMail ? <Link to="/dev/mail">Mail log</Link> : null}
 						</p>
