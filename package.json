@@ -11,7 +11,8 @@
     "start": "bun scripts/start.ts",
     "test": "bun test",
     "prove": "bun scripts/prove.ts",
-    "check": "biome check src scripts"
+    "check": "biome check src scripts",
+    "seed:sample": "bun scripts/seed-sample.ts"
   },
   "dependencies": {
     "@fontsource/figtree": "5.3.0",
