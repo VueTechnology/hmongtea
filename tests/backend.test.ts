@@ -4,7 +4,7 @@ import postgres from "postgres";
 import Stripe from "stripe";
 import { openDatabase, type Sql } from "../src/db/client";
 import { migrate } from "../src/db/migrate";
-import { CSRF_COOKIE, readCookie, SESSION_COOKIE } from "../src/server/cookies";
+import { readCsrfToken, readSessionToken } from "../src/server/cookies";
 import { readEnv } from "../src/server/env";
 
 const adminUrl = process.env.DATABASE_URL;
@@ -91,7 +91,7 @@ function jar(response: Response, previous = ""): string {
 }
 
 function csrfOf(cookie: string): string {
-	return readCookie(cookie, CSRF_COOKIE) ?? "";
+	return readCsrfToken(cookie) ?? "";
 }
 
 function mailToken(body: string, path: string): string {
@@ -177,7 +177,10 @@ test("postgres backend", async () => {
 	expect(registered.headers.get("location")).toBe("/account");
 	const setCookies = registered.headers.getSetCookie().join("\n");
 	expect(setCookies).toContain("HttpOnly");
-	expect(setCookies).toContain("Secure");
+	expect(setCookies).toContain("SameSite=Lax");
+	expect(setCookies).toContain("hmongtea_session=");
+	expect(setCookies).not.toContain("Secure");
+	expect(setCookies).not.toContain("__Host-");
 	retailCookie = jar(registered, retailCookie);
 
 	const duplicate = await handlePost(
@@ -264,7 +267,7 @@ test("postgres backend", async () => {
 	expect(pendingOrder.status).toBe(303);
 	expect(pendingOrder.headers.get("location")).toContain("error=pending");
 	const pendingDesk = await pages.wholesaleDesk(
-		readCookie(wholesaleCookie, SESSION_COOKIE) ?? "",
+		readSessionToken(wholesaleCookie) ?? "",
 	);
 	expect(pendingDesk.kind).toBe("ok");
 	if (pendingDesk.kind === "ok") {
@@ -283,7 +286,7 @@ test("postgres backend", async () => {
 	);
 	expect(retailOnWholesale.status).toBe(403);
 	const retailDesk = await pages.wholesaleDesk(
-		readCookie(retailCookie, SESSION_COOKIE) ?? "",
+		readSessionToken(retailCookie) ?? "",
 	);
 	expect(retailDesk.kind).toBe("forbidden");
 
@@ -411,7 +414,7 @@ test("postgres backend", async () => {
 	expect(stolen.status).toBe(403);
 	expect((await store.getOrder(db, placedId))?.status).toBe("placed");
 	const otherRead = await pages.orderPage(
-		readCookie(otherCookie, SESSION_COOKIE) ?? "",
+		readSessionToken(otherCookie) ?? "",
 		placedId,
 	);
 	expect(otherRead.kind).toBe("forbidden");
@@ -431,7 +434,7 @@ test("postgres backend", async () => {
 	);
 	expect(customerStaff.status).toBe(403);
 	expect(
-		(await pages.staffHome(readCookie(retailCookie, SESSION_COOKIE) ?? ""))
+		(await pages.staffHome(readSessionToken(retailCookie) ?? ""))
 			.kind,
 	).toBe("forbidden");
 	const exportDenied = await handleExport(
@@ -441,7 +444,7 @@ test("postgres backend", async () => {
 	);
 	expect(exportDenied.status).toBe(403);
 	expect(
-		(await pages.staffProduct(readCookie(retailCookie, SESSION_COOKIE) ?? ""))
+		(await pages.staffProduct(readSessionToken(retailCookie) ?? ""))
 			.kind,
 	).toBe("forbidden");
 
@@ -477,11 +480,11 @@ test("postgres backend", async () => {
 	expect((await pages.wholesaleDesk("")).kind).toBe("anonymous");
 	expect((await pages.accountPage("")).kind).toBe("anonymous");
 	expect(
-		(await pages.staffHome(readCookie(wholesaleCookie, SESSION_COOKIE) ?? ""))
+		(await pages.staffHome(readSessionToken(wholesaleCookie) ?? ""))
 			.kind,
 	).toBe("forbidden");
 	expect(
-		(await pages.accountPage(readCookie(wholesaleCookie, SESSION_COOKIE) ?? ""))
+		(await pages.accountPage(readSessionToken(wholesaleCookie) ?? ""))
 			.kind,
 	).toBe("forbidden");
 	const partnerStaff = await handlePost(
@@ -518,7 +521,7 @@ test("postgres backend", async () => {
 	expect(shippedRow?.trackingNumber).toBe("TRACK-D7-1001");
 	expect(shippedRow?.shipDate).toBe("2026-11-17");
 	const seen = await pages.orderPage(
-		readCookie(retailCookie, SESSION_COOKIE) ?? "",
+		readSessionToken(retailCookie) ?? "",
 		placedId,
 	);
 	expect(seen.kind).toBe("ok");
@@ -712,12 +715,12 @@ test("postgres backend", async () => {
 	);
 
 	const detail = await pages.staffWholesaleDetail(
-		readCookie(staffCookie, SESSION_COOKIE) ?? "",
+		readSessionToken(staffCookie) ?? "",
 		staffRow ? "" : "",
 	);
 	const shop = await store.findAccountByEmail(db, "shop@example.com");
 	const full = await pages.staffWholesaleDetail(
-		readCookie(staffCookie, SESSION_COOKIE) ?? "",
+		readSessionToken(staffCookie) ?? "",
 		shop?.id ?? "",
 	);
 	expect(full.kind).toBe("ok");
@@ -860,7 +863,7 @@ test("postgres backend", async () => {
 	);
 	expect(loggedOut.status).toBe(303);
 	expect(
-		await store.findViewer(db, readCookie(retailCookie, SESSION_COOKIE)),
+		await store.findViewer(db, readSessionToken(retailCookie)),
 	).toBeNull();
 
 	const ada = await store.findAccountByEmail(db, "ada@example.com");
@@ -951,7 +954,7 @@ test("postgres backend", async () => {
 	expect(await store.readCartQty(db, ada.id)).toBe(0);
 	expect(await store.readStock(db)).toBe(4974);
 	const customerList = await pages.staffCustomers(
-		readCookie(staffCookie, SESSION_COOKIE) ?? "",
+		readSessionToken(staffCookie) ?? "",
 	);
 	expect(customerList.kind).toBe("ok");
 	if (customerList.kind === "ok") {
@@ -1041,11 +1044,11 @@ test("postgres backend", async () => {
 		expect(resetDenied.status).toBe(403);
 	}
 	expect(
-		(await pages.staffAccountForm(readCookie(adaCookie, SESSION_COOKIE) ?? ""))
+		(await pages.staffAccountForm(readSessionToken(adaCookie) ?? ""))
 			.kind,
 	).toBe("forbidden");
 	expect(
-		(await pages.staffOrderForm(readCookie(adaCookie, SESSION_COOKIE) ?? ""))
+		(await pages.staffOrderForm(readSessionToken(adaCookie) ?? ""))
 			.kind,
 	).toBe("forbidden");
 

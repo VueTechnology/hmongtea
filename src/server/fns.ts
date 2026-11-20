@@ -1,9 +1,29 @@
 import { createServerFn } from "@tanstack/react-start";
-import { CART_COOKIE, CSRF_COOKIE, SESSION_COOKIE } from "#/server/cookies";
+import {
+	CART_COOKIE,
+	CART_COOKIE_HTTP,
+	CSRF_COOKIE,
+	CSRF_COOKIE_HTTP,
+	SESSION_COOKIE,
+	SESSION_COOKIE_HTTP,
+	cookieIsSecure,
+	csrfCookieName,
+} from "#/server/cookies";
+
+function firstCookie(
+	getCookie: (name: string) => string | undefined,
+	...names: string[]
+): string {
+	for (const name of names) {
+		const value = getCookie(name);
+		if (value) return value;
+	}
+	return "";
+}
 
 async function sessionCookie(): Promise<string> {
 	const server = await import("@tanstack/react-start/server");
-	return server.getCookie(SESSION_COOKIE) ?? "";
+	return firstCookie(server.getCookie, SESSION_COOKIE, SESSION_COOKIE_HTTP);
 }
 
 async function markStatus(status: number): Promise<void> {
@@ -20,14 +40,19 @@ export const loadShell = createServerFn({ method: "GET" }).handler(async () => {
 	const server = await import("@tanstack/react-start/server");
 	const { buildShell } = await import("#/server/pages");
 	const shell = await buildShell({
-		session: server.getCookie(SESSION_COOKIE) ?? "",
-		cart: server.getCookie(CART_COOKIE) ?? "",
-		csrf: server.getCookie(CSRF_COOKIE) ?? "",
+		session: firstCookie(
+			server.getCookie,
+			SESSION_COOKIE,
+			SESSION_COOKIE_HTTP,
+		),
+		cart: firstCookie(server.getCookie, CART_COOKIE, CART_COOKIE_HTTP),
+		csrf: firstCookie(server.getCookie, CSRF_COOKIE, CSRF_COOKIE_HTTP),
 	});
 	if (shell.issueCsrf) {
-		server.setCookie(CSRF_COOKIE, shell.csrf, {
+		const secure = cookieIsSecure(server.getRequest());
+		server.setCookie(csrfCookieName(secure), shell.csrf, {
 			httpOnly: true,
-			secure: true,
+			secure,
 			sameSite: "lax",
 			path: "/",
 			maxAge: 60 * 60 * 24 * 14,

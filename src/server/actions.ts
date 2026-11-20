@@ -20,14 +20,13 @@ import {
 	parseWebsite,
 } from "#/domain/validate";
 import {
-	CART_COOKIE,
-	CSRF_COOKIE,
 	cartCookie,
 	clearCartCookie,
-	clearSessionCookie,
+	clearSessionCookies,
 	csrfCookie,
-	readCookie,
-	SESSION_COOKIE,
+	readCartCookie,
+	readCsrfToken,
+	readSessionToken,
 	sessionCookie,
 } from "#/server/cookies";
 import { type AppEnv, readEnv } from "#/server/env";
@@ -151,7 +150,7 @@ function pathOf(request: Request): string {
 async function viewerOf(request: Request): Promise<Viewer | null> {
 	return findViewer(
 		getDb(),
-		readCookie(request.headers.get("cookie"), SESSION_COOKIE),
+		readSessionToken(request.headers.get("cookie")),
 	);
 }
 
@@ -160,17 +159,22 @@ function csrfOk(
 	field: string,
 	viewer: Viewer | null,
 ): boolean {
-	const cookie = readCookie(request.headers.get("cookie"), CSRF_COOKIE);
+	const cookie = readCsrfToken(request.headers.get("cookie"));
 	if (!cookie || !field || !tokenEquals(cookie, field)) return false;
 	if (viewer && !tokenEquals(viewer.csrf, field)) return false;
 	return true;
 }
 
 function sessionCookies(
+	request: Request,
 	session: { token: string; csrf: string },
 	extra: string[] = [],
 ): string[] {
-	return [sessionCookie(session.token), csrfCookie(session.csrf), ...extra];
+	return [
+		sessionCookie(session.token, request),
+		csrfCookie(session.csrf, request),
+		...extra,
+	];
 }
 
 type Door = "retail" | "wholesale" | "staff" | "any";
@@ -226,15 +230,15 @@ async function login(
 	const extra: string[] = [];
 	if (portal === "customer") {
 		const qty = parseCartQty(
-			readCookie(request.headers.get("cookie"), CART_COOKIE),
+			readCartCookie(request.headers.get("cookie")),
 		);
 		if (qty > 0) await setCart(getDb(), account.id, "retail", qty);
-		extra.push(clearCartCookie());
+		extra.push(clearCartCookie(request));
 	}
 	if (account.role === "staff")
 		await audit(getDb(), account.id, "staff.login", "session", account.id);
 	const dest = door === "any" ? portalHome(portal) : doorPathHome(door);
-	return redirect(dest, sessionCookies(session, extra));
+	return redirect(dest, sessionCookies(request, session, extra));
 }
 
 function doorPathHome(door: Door): string {
@@ -273,7 +277,7 @@ async function registerRetail(
 	});
 	if (!created.ok) return redirect("/register?error=taken");
 	const session = await openSession(getDb(), created.id);
-	return redirect("/account", sessionCookies(session));
+	return redirect("/account", sessionCookies(request, session));
 }
 
 async function registerWholesale(
@@ -332,7 +336,7 @@ async function registerWholesale(
 		return redirect("/partners?error=taken");
 	if (!created.ok) return redirect("/partners?error=ein");
 	const session = await openSession(getDb(), created.id);
-	return redirect("/wholesale/desk", sessionCookies(session));
+	return redirect("/wholesale/desk", sessionCookies(request, session));
 }
 
 async function saveCart(
@@ -350,9 +354,10 @@ async function saveCart(
 		return redirect("/cart");
 	}
 	return redirect("/cart", [
-		cartCookie(qty),
+		cartCookie(qty, request),
 		csrfCookie(
-			readCookie(request.headers.get("cookie"), CSRF_COOKIE) ?? newToken(),
+			readCsrfToken(request.headers.get("cookie")) ?? newToken(),
+			request,
 		),
 	]);
 }
@@ -835,9 +840,12 @@ export async function handlePost(request: Request): Promise<Response> {
 	if (path === "/wholesale/register")
 		return registerWholesale(request, fields, env);
 	if (path === "/logout") {
-		const token = readCookie(request.headers.get("cookie"), SESSION_COOKIE);
+		const token = readSessionToken(request.headers.get("cookie"));
 		if (token) await deleteSession(getDb(), token);
-		return redirect("/", [clearSessionCookie(), csrfCookie(newToken())]);
+		return redirect("/", [
+			...clearSessionCookies(),
+			csrfCookie(newToken(), request),
+		]);
 	}
 	if (path === "/updates") {
 		const hits = await consumeRateLimit(
