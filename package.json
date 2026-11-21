@@ -7,16 +7,19 @@
   },
   "scripts": {
     "dev": "vite dev --port 3299 --host 0.0.0.0",
+    "predev": "bun scripts/build-tokens.ts",
     "build": "vite build",
+    "prebuild": "bun scripts/build-tokens.ts",
+    "tokens": "bun scripts/build-tokens.ts",
     "start": "bun scripts/start.ts",
     "test": "bun test",
     "prove": "bun scripts/prove.ts",
-    "check": "biome check src scripts",
+    "check": "bun scripts/build-tokens.ts --check && biome check src scripts",
     "seed:sample": "bun scripts/seed-sample.ts"
   },
   "dependencies": {
-    "@fontsource/figtree": "5.3.0",
-    "@fontsource/fraunces": "5.3.0",
+    "@fontsource-variable/manrope": "5.3.0",
+    "@fontsource-variable/newsreader": "5.3.0",
     "@tailwindcss/vite": "4.3.5",
     "@tanstack/react-router": "1.170.46",
     "@tanstack/react-start": "1.169.5",

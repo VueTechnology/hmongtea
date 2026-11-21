@@ -1,20 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { formatUsd } from "#/domain/money";
-import {
-	NET_WEIGHT_LABEL,
-	PRODUCT_NAME,
-	RETAIL_CENTS,
-	SHIP_WINDOW,
-	SUBSCRIPTION_CENTS,
-} from "#/domain/prices";
-import {
-	buttonClass,
-	Csrf,
-	fieldClass,
-	Page,
-	Title,
-	useShell,
-} from "#/ui/site";
+import { NET_WEIGHT_LABEL, PRODUCT_NAME, SHIP_WINDOW } from "#/domain/prices";
+import { BuyBox } from "#/ui/buy-box";
+import { Page, Title } from "#/ui/site";
 
 export const Route = createFileRoute("/tea")({
 	head: () => ({ meta: [{ title: "Tea, hmongtea.com" }] }),
@@ -22,7 +9,6 @@ export const Route = createFileRoute("/tea")({
 });
 
 function Tea() {
-	const shell = useShell();
 	return (
 		<Page>
 			<Title eyebrow="hmongtea.com" title={PRODUCT_NAME} />
@@ -115,72 +101,7 @@ function Tea() {
 						in Chiang Rai, Thailand. The pick is the top 3 leaves. Caffeine is
 						low. Net weight {NET_WEIGHT_LABEL}. Ships in {SHIP_WINDOW}.
 					</p>
-					<p data-testid="retail-price">
-						One pack is{" "}
-						<span data-ht="price-onetime">{formatUsd(RETAIL_CENTS)}</span>. A
-						subscription pack is{" "}
-						<span data-ht="price-subscribe">
-							{formatUsd(SUBSCRIPTION_CENTS)}
-						</span>
-						.
-					</p>
-					<form className="grid max-w-sm gap-4" method="post" action="/cart">
-						<Csrf />
-						<fieldset className="grid gap-3 border-0 p-0">
-							<legend>Choose a plan</legend>
-							<label
-								data-ht="plan-subscribe"
-								className="flex min-h-11 items-center gap-3"
-							>
-								<input
-									type="radio"
-									name="plan"
-									value="subscription"
-									defaultChecked={
-										shell.cartQty === 0 || shell.cartPlanKind === "subscription"
-									}
-								/>
-								Subscribe for {formatUsd(SUBSCRIPTION_CENTS)} a pack. Save $5.00
-								every order.
-							</label>
-							<label
-								data-ht="plan-onetime"
-								className="flex min-h-11 items-center gap-3"
-							>
-								<input
-									type="radio"
-									name="plan"
-									value="one-time"
-									defaultChecked={
-										shell.cartQty > 0 && shell.cartPlanKind === "one-time"
-									}
-								/>
-								Buy one pack for {formatUsd(RETAIL_CENTS)}.
-							</label>
-						</fieldset>
-						<p className="m-0 text-sm">
-							Subscribe: {formatUsd(SUBSCRIPTION_CENTS)} every{" "}
-							{shell.subscriptionIntervalWeeks} weeks. Cancel any time in your
-							account.
-						</p>
-						<label className="grid text-sm" htmlFor="qty">
-							Packs
-							<input
-								id="qty"
-								data-ht="qty"
-								className={fieldClass}
-								name="qty"
-								type="number"
-								min={1}
-								max={12}
-								defaultValue={1}
-								required
-							/>
-						</label>
-						<button data-ht="add-to-cart" className={buttonClass} type="submit">
-							Add to cart
-						</button>
-					</form>
+					<BuyBox id="tea" />
 				</div>
 			</div>
 		</Page>

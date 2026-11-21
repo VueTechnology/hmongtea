@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { formatUsd } from "#/domain/money";
 import {
 	NET_WEIGHT_LABEL,
@@ -6,16 +6,9 @@ import {
 	SUBSCRIPTION_CENTS,
 } from "#/domain/prices";
 import { loadHome } from "#/server/fns";
+import { BuyBox } from "#/ui/buy-box";
 import { noteSearch } from "#/ui/search";
-import {
-	buttonClass,
-	Csrf,
-	Field,
-	Notes,
-	Page,
-	quietButtonClass,
-	Title,
-} from "#/ui/site";
+import { buttonClass, Csrf, Field, Notes, Page, Title } from "#/ui/site";
 
 export const Route = createFileRoute("/")({
 	head: () => ({ meta: [{ title: "hmongtea.com" }] }),
@@ -45,14 +38,7 @@ function Home() {
 						One pack is {formatUsd(home.retailCents)}. A subscription pack is{" "}
 						{formatUsd(SUBSCRIPTION_CENTS)}.
 					</p>
-					<div className="flex flex-wrap gap-3">
-						<Link to="/tea" className={buttonClass}>
-							Order
-						</Link>
-						<Link to="/partners" className={quietButtonClass}>
-							Partners
-						</Link>
-					</div>
+					<BuyBox id="home" />
 				</div>
 				<figure className="stage m-0">
 					<picture>

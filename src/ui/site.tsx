@@ -13,11 +13,11 @@ import type { Notes as SearchNotes } from "#/ui/search";
 const rootApi = getRouteApi("__root__");
 
 export const fieldClass =
-	"mt-1 block w-full min-h-11 rounded-xl border border-line bg-paper px-3 py-2 text-base text-ink";
+	"mt-1 block w-full min-h-12 rounded-xl border border-line bg-paper px-4 py-3 text-base text-ink";
 export const buttonClass =
-	"inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border-0 bg-button px-5 text-sm text-button-text no-underline";
+	"inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full border-0 bg-button px-6 text-base font-bold text-button-text no-underline transition-colors hover:bg-primary-pressed";
 export const quietButtonClass =
-	"inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border border-muted bg-transparent px-5 text-sm text-ink no-underline";
+	"inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full border border-muted bg-transparent px-6 text-base font-semibold text-ink no-underline transition-colors hover:bg-sage";
 
 export function useShell() {
 	return rootApi.useLoaderData();
@@ -101,11 +101,11 @@ export function SiteFrame({ children }: { children: ReactNode }) {
 						<img
 							className="mark"
 							src="/favicon.svg"
-							alt="hmongtea.com"
-							width={28}
-							height={28}
+							alt=""
+							width={32}
+							height={32}
 						/>
-						hmongtea.com
+						HmongTea
 					</Link>
 					{wholesale ? (
 						<span data-testid="channel-label" className="channel-label">
@@ -125,15 +125,18 @@ export function SiteFrame({ children }: { children: ReactNode }) {
 			{children}
 			<footer>
 				<div className="wrap footer-row">
-					<img
-						className="footer-logo"
-						src="/brand/logo-nthn.jpg"
-						alt="Niam Txoj Hmoo"
-					/>
 					<div className="stack">
-						<p className="row m-0">
-							{shell.demoMail ? <Link to="/dev/mail">Mail log</Link> : null}
+						<Link to="/" className="wordmark">
+							HmongTea
+						</Link>
+						<p className="m-0">
+							Whole-leaf green tea from the hills of Chiang Rai.
 						</p>
+					</div>
+					<div className="stack">
+						<Link to="/tea">Tea</Link>
+						<Link to="/partners">Wholesale</Link>
+						{shell.demoMail ? <Link to="/dev/mail">Mail log</Link> : null}
 					</div>
 				</div>
 			</footer>
@@ -143,27 +146,21 @@ export function SiteFrame({ children }: { children: ReactNode }) {
 
 export function Page({ children }: { children: ReactNode }) {
 	return (
-		<main id="main" className="mx-auto max-w-5xl px-4 py-10">
+		<main id="main" className="wrap section">
 			{children}
 		</main>
 	);
 }
 
 export function Eyebrow({ children }: { children: ReactNode }) {
-	return (
-		<p className="m-0 text-xs tracking-[0.18em] text-muted uppercase">
-			{children}
-		</p>
-	);
+	return <p className="eyebrow">{children}</p>;
 }
 
 export function Title({ eyebrow, title }: { eyebrow: string; title: string }) {
 	return (
 		<>
 			<Eyebrow>{eyebrow}</Eyebrow>
-			<h1 className="mt-3 font-serif text-4xl font-medium md:text-5xl">
-				{title}
-			</h1>
+			<h1 className="section-heading mt-3">{title}</h1>
 			<div className="goldbar" aria-hidden="true" />
 		</>
 	);
