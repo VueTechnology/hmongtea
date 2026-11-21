@@ -53,6 +53,12 @@ function Account() {
 							<Status value={order.status} />, {order.qty} packs,{" "}
 							<Money cents={order.totalCents} />
 						</p>
+						{order.purchasePlan === "subscription" ? (
+							<p className="m-0 mt-2 text-sm">
+								Subscription {order.subscriptionStatus}. Open the order to skip,
+								change or cancel.
+							</p>
+						) : null}
 						{order.placedByStaffId ? (
 							<p className="m-0 text-sm">Placed by staff.</p>
 						) : null}

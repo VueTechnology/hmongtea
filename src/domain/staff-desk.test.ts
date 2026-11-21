@@ -5,8 +5,8 @@ test("a staff order for a customer uses the retail price", () => {
 	const quote = quoteOnBehalf({ side: "retail", tier: null, qty: 2 });
 	expect(quote.ok).toBe(true);
 	if (!quote.ok) return;
-	expect(quote.quote.unitCents).toBe(3200);
-	expect(quote.quote.totalCents).toBe(6400);
+	expect(quote.quote.unitCents).toBe(4494);
+	expect(quote.quote.totalCents).toBe(8988);
 	expect(quote.quote.side).toBe("retail");
 });
 

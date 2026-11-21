@@ -1,5 +1,7 @@
-export const RETAIL_CENTS = 3200;
-export const SUBSCRIPTION_CENTS = 3000;
+import type { PlanKind } from "#/domain/purchase-plan";
+
+export const RETAIL_CENTS = 4494;
+export const SUBSCRIPTION_CENTS = 3994;
 export const NET_WEIGHT_LABEL = "4.4 oz (125 g)";
 export const SHIP_WINDOW = "5 to 7 business days";
 
@@ -55,7 +57,14 @@ export function wholesaleUnit(qty: number): number | null {
 	return unit;
 }
 
-export function retailUnit(qty: number): number | null {
+export function planUnitCents(planKind: PlanKind): number {
+	return planKind === "subscription" ? SUBSCRIPTION_CENTS : RETAIL_CENTS;
+}
+
+export function retailUnit(
+	qty: number,
+	planKind: PlanKind = "one-time",
+): number | null {
 	if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY) return null;
-	return RETAIL_CENTS;
+	return planUnitCents(planKind);
 }

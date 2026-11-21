@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { formatUsd } from "#/domain/money";
-import { RETAIL_CENTS } from "#/domain/prices";
+import { planUnitCents } from "#/domain/prices";
 import { loadCheckout } from "#/server/fns";
 import { noteSearch } from "#/ui/search";
 import {
@@ -33,6 +33,7 @@ function Checkout() {
 	const shell = useShell();
 	const viewer = shell.viewer;
 	const qty = shell.cartQty;
+	const unitCents = planUnitCents(shell.cartPlanKind);
 	const retail = viewer?.role === "customer" && viewer.side === "retail";
 	return (
 		<Page>
@@ -65,9 +66,12 @@ function Checkout() {
 				<form className="grid max-w-lg gap-4" method="post" action="/checkout">
 					<Csrf />
 					<p className="m-0">
-						{qty} packs at {formatUsd(RETAIL_CENTS)}. Total{" "}
-						<span data-testid="order-total">
-							{formatUsd(qty * RETAIL_CENTS)}
+						{shell.cartPlanKind === "subscription"
+							? `Subscription, every ${shell.subscriptionIntervalWeeks} weeks. `
+							: "One-time purchase. "}
+						{qty} packs at {formatUsd(unitCents)}. Total{" "}
+						<span data-ht="order-total" data-testid="order-total">
+							{formatUsd(qty * unitCents)}
 						</span>
 						.
 					</p>
@@ -79,7 +83,7 @@ function Checkout() {
 						autoComplete="name"
 					/>
 					<AddressFields />
-					<button className={buttonClass} type="submit">
+					<button data-ht="place-order" className={buttonClass} type="submit">
 						Place order
 					</button>
 				</form>

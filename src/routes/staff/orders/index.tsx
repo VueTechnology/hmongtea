@@ -92,6 +92,7 @@ function StaffOrders() {
 						<tr className="border-b border-line">
 							<th className="py-2 pr-3 font-medium">Date</th>
 							<th className="py-2 pr-3 font-medium">Side</th>
+							<th className="py-2 pr-3 font-medium">Plan</th>
 							<th className="py-2 pr-3 font-medium">Status</th>
 							<th className="py-2 pr-3 font-medium">Email</th>
 							<th className="py-2 pr-3 font-medium">Total</th>
@@ -110,6 +111,11 @@ function StaffOrders() {
 								</td>
 								<td className="py-2 pr-3">
 									{order.side === "wholesale" ? "Partner" : "Retail"}
+								</td>
+								<td className="py-2 pr-3">
+									{order.purchasePlan === "subscription"
+										? `Subscription, ${order.subscriptionIntervalWeeks} weeks`
+										: "One-time"}
 								</td>
 								<td className="py-2 pr-3">
 									<Status value={order.status} />

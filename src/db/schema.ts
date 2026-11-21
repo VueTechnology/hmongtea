@@ -55,6 +55,10 @@ export const carts = pgTable("carts", {
 	accountId: uuid("account_id").primaryKey(),
 	side: text("side").$type<"retail" | "wholesale">().notNull(),
 	qty: integer("qty").notNull(),
+	purchasePlan: text("purchase_plan")
+		.$type<"one-time" | "subscription">()
+		.notNull()
+		.default("one-time"),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
 		.notNull()
 		.defaultNow(),
@@ -62,7 +66,7 @@ export const carts = pgTable("carts", {
 
 export const orders = pgTable("orders", {
 	id: uuid("id").primaryKey(),
-	accountId: uuid("account_id").notNull(),
+	accountId: uuid("account_id"),
 	side: text("side").$type<"retail" | "wholesale">().notNull(),
 	status: text("status")
 		.$type<"unpaid" | "placed" | "shipped" | "cancelled">()
@@ -79,6 +83,16 @@ export const orders = pgTable("orders", {
 	qty: integer("qty").notNull(),
 	unitCents: integer("unit_cents").notNull(),
 	totalCents: integer("total_cents").notNull(),
+	purchasePlan: text("purchase_plan")
+		.$type<"one-time" | "subscription">()
+		.notNull()
+		.default("one-time"),
+	subscriptionStatus: text("subscription_status").$type<
+		"active" | "cancelled"
+	>(),
+	subscriptionIntervalWeeks: integer("subscription_interval_weeks"),
+	nextOrderOn: date("next_order_on", { mode: "string" }),
+	guestClaimHash: text("guest_claim_hash").unique(),
 	paymentMode: text("payment_mode")
 		.$type<"demo" | "stripe" | "net-terms-placeholder">()
 		.notNull(),
@@ -196,6 +210,16 @@ export const products = pgTable("products", {
 	sku: text("sku").primaryKey(),
 	name: text("name").notNull(),
 	onHand: integer("on_hand").notNull(),
+});
+
+export const storeSettings = pgTable("store_settings", {
+	id: integer("id").primaryKey(),
+	subscriptionIntervalWeeks: integer("subscription_interval_weeks")
+		.notNull()
+		.default(4),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+		.notNull()
+		.defaultNow(),
 });
 
 export const rateLimits = pgTable("rate_limits", {

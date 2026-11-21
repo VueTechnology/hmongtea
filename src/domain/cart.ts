@@ -1,13 +1,27 @@
 import { MOQ, retailUnit, wholesaleUnit } from "#/domain/prices";
+import {
+	type PurchasePlan,
+	parseRetailCartCookie,
+} from "#/domain/purchase-plan";
 
 export type CartSide = "retail" | "wholesale";
 
-export type Quote = {
-	side: CartSide;
+type QuoteBase = {
 	qty: number;
 	unitCents: number;
 	totalCents: number;
 };
+
+export type RetailQuote = QuoteBase & {
+	side: "retail";
+	purchasePlan: PurchasePlan;
+};
+
+export type WholesaleQuote = QuoteBase & {
+	side: "wholesale";
+};
+
+export type Quote = RetailQuote | WholesaleQuote;
 
 export type QuoteError =
 	| "qty"
@@ -17,19 +31,19 @@ export type QuoteError =
 	| "rejected";
 
 export function parseCartQty(raw: string | null | undefined): number {
-	if (!raw) return 0;
-	if (!/^\d{1,3}$/.test(raw)) return 0;
-	const qty = Number(raw);
-	if (qty > 999) return 0;
-	return qty;
+	return parseRetailCartCookie(raw).qty;
 }
 
-export function quoteCart(input: {
-	accountSide: CartSide;
-	accountStatus: "active" | "pending" | "rejected";
-	orderSide: CartSide;
-	qty: number;
-}): { ok: true; quote: Quote } | { ok: false; error: QuoteError } {
+export function quoteCart(
+	input: {
+		accountSide: CartSide;
+		accountStatus: "active" | "pending" | "rejected";
+		qty: number;
+	} & (
+		| { orderSide: "wholesale" }
+		| { orderSide: "retail"; purchasePlan: PurchasePlan }
+	),
+): { ok: true; quote: Quote } | { ok: false; error: QuoteError } {
 	if (input.orderSide === "wholesale" && input.accountSide !== "wholesale") {
 		return { ok: false, error: "retail-blocked" };
 	}
@@ -42,15 +56,26 @@ export function quoteCart(input: {
 	if (input.orderSide === "wholesale" && input.qty < MOQ) {
 		return { ok: false, error: "moq" };
 	}
-	const unit =
-		input.orderSide === "wholesale"
-			? wholesaleUnit(input.qty)
-			: retailUnit(input.qty);
+	if (input.orderSide === "retail") {
+		const unit = retailUnit(input.qty, input.purchasePlan.kind);
+		if (unit == null) return { ok: false, error: "qty" };
+		return {
+			ok: true,
+			quote: {
+				side: "retail",
+				purchasePlan: input.purchasePlan,
+				qty: input.qty,
+				unitCents: unit,
+				totalCents: unit * input.qty,
+			},
+		};
+	}
+	const unit = wholesaleUnit(input.qty);
 	if (unit == null) return { ok: false, error: "qty" };
 	return {
 		ok: true,
 		quote: {
-			side: input.orderSide,
+			side: "wholesale",
 			qty: input.qty,
 			unitCents: unit,
 			totalCents: unit * input.qty,

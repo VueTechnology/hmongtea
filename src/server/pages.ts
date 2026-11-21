@@ -1,12 +1,17 @@
 import { getDb } from "#/db/client";
-import { parseCartQty } from "#/domain/cart";
 import {
 	MOQ,
 	PARTNER_TIERS,
 	PRODUCT_NAME,
 	RETAIL_CENTS,
+	SUBSCRIPTION_CENTS,
 	WHOLESALE_TIERS,
 } from "#/domain/prices";
+import {
+	type PlanKind,
+	parseRetailCartCookie,
+	type RetailCart,
+} from "#/domain/purchase-plan";
 import { newToken } from "#/domain/secret";
 import { readEnv } from "#/server/env";
 import { listDeskTargets } from "#/server/staff-desk";
@@ -25,9 +30,10 @@ import {
 	type PublicViewer,
 	publicViewer,
 	readCampaign,
-	readCartQty,
+	readCart,
 	readOrderFor,
 	readProduct,
+	readSubscriptionInterval,
 	revealTaxId,
 	searchOrders,
 	unsubscribeToken,
@@ -36,7 +42,7 @@ import {
 
 export type OrderView = {
 	id: string;
-	accountId: string;
+	accountId: string | null;
 	side: "retail" | "wholesale";
 	status: "unpaid" | "placed" | "shipped" | "cancelled";
 	contactName: string;
@@ -51,6 +57,10 @@ export type OrderView = {
 	qty: number;
 	unitCents: number;
 	totalCents: number;
+	purchasePlan: "one-time" | "subscription";
+	subscriptionStatus: "active" | "cancelled" | null;
+	subscriptionIntervalWeeks: number | null;
+	nextOrderOn: string | null;
 	paymentMode: string;
 	netTerms: boolean;
 	shipDate: string | null;
@@ -62,6 +72,8 @@ export type OrderView = {
 export type Shell = {
 	csrf: string;
 	cartQty: number;
+	cartPlanKind: PlanKind;
+	subscriptionIntervalWeeks: number;
 	viewer: PublicViewer | null;
 	issueCsrf: boolean;
 	demoMail: boolean;
@@ -85,6 +97,10 @@ export function viewOrder(row: OrderRow): OrderView {
 		qty: row.qty,
 		unitCents: row.unitCents,
 		totalCents: row.totalCents,
+		purchasePlan: row.purchasePlan,
+		subscriptionStatus: row.subscriptionStatus,
+		subscriptionIntervalWeeks: row.subscriptionIntervalWeeks,
+		nextOrderOn: row.nextOrderOn,
 		paymentMode: row.paymentMode,
 		netTerms: row.netTerms,
 		shipDate: row.shipDate,
@@ -103,27 +119,39 @@ export async function buildShell(input: {
 		? await findViewer(getDb(), input.session)
 		: null;
 	const demoMail = readEnv().resendApiKey.length === 0;
-	let cartQty = 0;
-	if (viewer?.role === "customer" && viewer.side === "retail")
-		cartQty = await readCartQty(getDb(), viewer.id);
-	else if (!viewer) cartQty = parseCartQty(input.cart);
+	const cart: RetailCart =
+		viewer?.role === "customer" && viewer.side === "retail"
+			? await readCart(getDb(), viewer.id)
+			: viewer
+				? { qty: 0, planKind: "one-time" }
+				: parseRetailCartCookie(input.cart);
+	const subscriptionIntervalWeeks = await readSubscriptionInterval(getDb());
+	const shared = {
+		cartQty: cart.qty,
+		cartPlanKind: cart.planKind,
+		subscriptionIntervalWeeks,
+		demoMail,
+	};
 	if (viewer)
 		return {
+			...shared,
 			csrf: viewer.csrf,
-			cartQty,
 			viewer: publicViewer(viewer),
 			issueCsrf: false,
-			demoMail,
 		};
 	if (input.csrf)
 		return {
+			...shared,
 			csrf: input.csrf,
-			cartQty,
 			viewer: null,
 			issueCsrf: false,
-			demoMail,
 		};
-	return { csrf: newToken(), cartQty, viewer: null, issueCsrf: true, demoMail };
+	return {
+		...shared,
+		csrf: newToken(),
+		viewer: null,
+		issueCsrf: true,
+	};
 }
 
 async function viewer(session: string): Promise<Viewer | null> {
@@ -136,6 +164,8 @@ export async function readHome() {
 	return {
 		productName: PRODUCT_NAME,
 		retailCents: RETAIL_CENTS,
+		subscriptionCents: SUBSCRIPTION_CENTS,
+		subscriptionIntervalWeeks: await readSubscriptionInterval(getDb()),
 		targetCents: row?.targetCents ?? 0,
 		raisedCents: row?.raisedCents ?? 0,
 		placeholder: row?.placeholder ?? true,
@@ -437,8 +467,17 @@ export async function staffCustomers(session: string) {
 export async function staffProduct(session: string) {
 	const gate = await requireStaff(session);
 	if (gate.kind !== "ok") return gate;
-	const product = await readProduct(getDb());
-	return { kind: "ok" as const, product };
+	const [product, subscriptionIntervalWeeks] = await Promise.all([
+		readProduct(getDb()),
+		readSubscriptionInterval(getDb()),
+	]);
+	return {
+		kind: "ok" as const,
+		product,
+		retailCents: RETAIL_CENTS,
+		subscriptionCents: SUBSCRIPTION_CENTS,
+		subscriptionIntervalWeeks,
+	};
 }
 
 export async function requireStaff(

@@ -10,6 +10,7 @@ import { readEnv } from "../src/server/env";
 const adminUrl = process.env.DATABASE_URL;
 if (!adminUrl) throw new Error("DATABASE_URL is required");
 const testUrl = adminUrl.replace(/\/[^/?]+$/, "/hmongtea_test");
+const mailpitOrigin = process.env.MAILPIT_ORIGIN ?? "http://127.0.0.1:8025";
 
 const retailPassword = `retail-${randomUUID()}`;
 const otherPassword = `other-${randomUUID()}`;
@@ -316,8 +317,8 @@ test("postgres backend", async () => {
 	expect(placedId).toMatch(/[0-9a-f-]{36}/);
 	const placed = await store.getOrder(db, placedId);
 	expect(placed?.status).toBe("placed");
-	expect(placed?.unitCents).toBe(3200);
-	expect(placed?.totalCents).toBe(3200);
+	expect(placed?.unitCents).toBe(4494);
+	expect(placed?.totalCents).toBe(4494);
 	expect(placed?.side).toBe("retail");
 	const adaEarly = await store.findAccountByEmail(db, "ada@example.com");
 	const reordered = await handlePost(
@@ -329,7 +330,7 @@ test("postgres backend", async () => {
 		),
 	);
 	expect(reordered.headers.get("location")).toBe("/cart");
-	expect(await store.readCartQty(db, adaEarly?.id ?? "")).toBe(1);
+	expect((await store.readCart(db, adaEarly?.id ?? "")).qty).toBe(1);
 
 	const second = await handlePost(
 		post(
@@ -434,8 +435,7 @@ test("postgres backend", async () => {
 	);
 	expect(customerStaff.status).toBe(403);
 	expect(
-		(await pages.staffHome(readSessionToken(retailCookie) ?? ""))
-			.kind,
+		(await pages.staffHome(readSessionToken(retailCookie) ?? "")).kind,
 	).toBe("forbidden");
 	const exportDenied = await handleExport(
 		new Request("http://127.0.0.1:3190/api/staff/orders.csv", {
@@ -444,8 +444,7 @@ test("postgres backend", async () => {
 	);
 	expect(exportDenied.status).toBe(403);
 	expect(
-		(await pages.staffProduct(readSessionToken(retailCookie) ?? ""))
-			.kind,
+		(await pages.staffProduct(readSessionToken(retailCookie) ?? "")).kind,
 	).toBe("forbidden");
 
 	const staffIssued = await issueCsrf();
@@ -480,12 +479,10 @@ test("postgres backend", async () => {
 	expect((await pages.wholesaleDesk("")).kind).toBe("anonymous");
 	expect((await pages.accountPage("")).kind).toBe("anonymous");
 	expect(
-		(await pages.staffHome(readSessionToken(wholesaleCookie) ?? ""))
-			.kind,
+		(await pages.staffHome(readSessionToken(wholesaleCookie) ?? "")).kind,
 	).toBe("forbidden");
 	expect(
-		(await pages.accountPage(readSessionToken(wholesaleCookie) ?? ""))
-			.kind,
+		(await pages.accountPage(readSessionToken(wholesaleCookie) ?? "")).kind,
 	).toBe("forbidden");
 	const partnerStaff = await handlePost(
 		post(
@@ -862,9 +859,7 @@ test("postgres backend", async () => {
 		),
 	);
 	expect(loggedOut.status).toBe(303);
-	expect(
-		await store.findViewer(db, readSessionToken(retailCookie)),
-	).toBeNull();
+	expect(await store.findViewer(db, readSessionToken(retailCookie))).toBeNull();
 
 	const ada = await store.findAccountByEmail(db, "ada@example.com");
 	expect(ada).not.toBeNull();
@@ -876,6 +871,7 @@ test("postgres backend", async () => {
 			orderSide: "retail",
 			qty: 1,
 			contactName: "Ada",
+			contactEmail: ada.email,
 			phone: "5550100000",
 			address: {
 				line1: "12 Tea Road",
@@ -888,7 +884,13 @@ test("postgres backend", async () => {
 			},
 			payment: "stripe",
 		},
-		{ side: "retail", qty: 1, unitCents: 3200, totalCents: 3200 },
+		{
+			side: "retail",
+			purchasePlan: { kind: "one-time" },
+			qty: 1,
+			unitCents: 4494,
+			totalCents: 4494,
+		},
 	);
 	expect((await store.getOrder(db, unpaidId))?.status).toBe("unpaid");
 	process.env.STRIPE_SECRET_KEY = "sk_test_abc";
@@ -948,10 +950,10 @@ test("postgres backend", async () => {
 		false,
 	);
 
-	await store.setCart(db, ada.id, "retail", 3);
-	expect(await store.readCartQty(db, ada.id)).toBe(3);
+	await store.setCart(db, ada.id, "retail", { qty: 3, planKind: "one-time" });
+	expect((await store.readCart(db, ada.id)).qty).toBe(3);
 	await store.clearCart(db, ada.id);
-	expect(await store.readCartQty(db, ada.id)).toBe(0);
+	expect((await store.readCart(db, ada.id)).qty).toBe(0);
 	expect(await store.readStock(db)).toBe(4974);
 	const customerList = await pages.staffCustomers(
 		readSessionToken(staffCookie) ?? "",
@@ -1044,12 +1046,10 @@ test("postgres backend", async () => {
 		expect(resetDenied.status).toBe(403);
 	}
 	expect(
-		(await pages.staffAccountForm(readSessionToken(adaCookie) ?? ""))
-			.kind,
+		(await pages.staffAccountForm(readSessionToken(adaCookie) ?? "")).kind,
 	).toBe("forbidden");
 	expect(
-		(await pages.staffOrderForm(readSessionToken(adaCookie) ?? ""))
-			.kind,
+		(await pages.staffOrderForm(readSessionToken(adaCookie) ?? "")).kind,
 	).toBe("forbidden");
 
 	const customerPassword = `desk-${randomUUID()}`;
@@ -1101,9 +1101,9 @@ test("postgres backend", async () => {
 	`;
 	expect(Number(duplicateCount[0]?.n)).toBe(1);
 
-	process.env.SMTP_HOST = "127.0.0.1";
-	process.env.SMTP_PORT = "1025";
-	await fetch("http://127.0.0.1:8025/api/v1/messages", { method: "DELETE" });
+	process.env.SMTP_HOST ??= "127.0.0.1";
+	process.env.SMTP_PORT ??= "1025";
+	await fetch(`${mailpitOrigin}/api/v1/messages`, { method: "DELETE" });
 	const createdPartner = await handlePost(
 		post(
 			"/staff/accounts",
@@ -1154,8 +1154,8 @@ test("postgres backend", async () => {
 	const customerOrderId = orderIdFrom(customerOrder);
 	const customerRow = await store.getOrder(db, customerOrderId);
 	expect(customerRow?.accountId).toBe(nia.id);
-	expect(customerRow?.unitCents).toBe(3200);
-	expect(customerRow?.totalCents).toBe(6400);
+	expect(customerRow?.unitCents).toBe(4494);
+	expect(customerRow?.totalCents).toBe(8988);
 	expect(customerRow?.placedByStaffId).toBe(staffRow.id);
 	const niaSession = await store.openSession(db, nia.id);
 	const niaPage = await pages.accountPage(niaSession.token);
@@ -1165,7 +1165,7 @@ test("postgres backend", async () => {
 			niaPage.orders.some(
 				(order) =>
 					order.id === customerOrderId &&
-					order.totalCents === 6400 &&
+					order.totalCents === 8988 &&
 					order.placedByStaffId === staffRow.id,
 			),
 		).toBe(true);
@@ -1210,7 +1210,7 @@ test("postgres backend", async () => {
 		);
 	}
 
-	await fetch("http://127.0.0.1:8025/api/v1/messages", { method: "DELETE" });
+	await fetch(`${mailpitOrigin}/api/v1/messages`, { method: "DELETE" });
 	const resetSend = await handlePost(
 		post(
 			"/staff/password-reset",
@@ -1273,7 +1273,7 @@ test("postgres backend", async () => {
 	);
 	expect(niaLogin.headers.get("location")).toBe("/account");
 
-	await fetch("http://127.0.0.1:8025/api/v1/messages", { method: "DELETE" });
+	await fetch(`${mailpitOrigin}/api/v1/messages`, { method: "DELETE" });
 	const expiring = await handlePost(
 		post(
 			"/staff/password-reset",
@@ -1363,14 +1363,14 @@ function orderIdFrom(response: Response): string {
 
 async function mailpitText(to: string, subject: string): Promise<string> {
 	const listed = await fetch(
-		`http://127.0.0.1:8025/api/v1/search?query=${encodeURIComponent(`to:${to}`)}`,
+		`${mailpitOrigin}/api/v1/search?query=${encodeURIComponent(`to:${to}`)}`,
 	);
 	const body = (await listed.json()) as {
 		messages?: { ID: string; Subject: string }[];
 	};
 	const hit = body.messages?.find((message) => message.Subject === subject);
 	expect(hit?.ID).toBeTruthy();
-	const full = await fetch(`http://127.0.0.1:8025/api/v1/message/${hit?.ID}`);
+	const full = await fetch(`${mailpitOrigin}/api/v1/message/${hit?.ID}`);
 	const message = (await full.json()) as { Text?: string };
 	return message.Text ?? "";
 }

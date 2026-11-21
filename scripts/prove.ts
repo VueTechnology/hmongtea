@@ -134,7 +134,7 @@ try {
 	await mustHave("$25,000.00");
 	await shot("home");
 	await open("/tea");
-	await mustHave("$32.00");
+	await mustHave("$44.94");
 	await mustNot("$24.00");
 	await shot("tea");
 	await open("/pre-order");
@@ -189,7 +189,7 @@ try {
 	await open("/pre-order");
 	await fill("input[name=qty]", "1");
 	await submitButton("form[action='/cart'] button[type=submit]");
-	await mustHave("$32.00");
+	await mustHave("$44.94");
 	await shot("cart-filled");
 	await open("/checkout");
 	await mustHave("Demo checkout");

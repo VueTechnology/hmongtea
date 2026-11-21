@@ -1,14 +1,14 @@
 import { expect, test } from "bun:test";
 import {
+	isProtectedEmail,
+	isSampleEmail,
 	PROTECTED_EMAILS,
 	SAMPLE_BLASTS,
 	SAMPLE_CUSTOMERS,
+	SAMPLE_ID_PREFIX,
 	SAMPLE_ORDERS,
 	SAMPLE_PARTNERS,
 	SAMPLE_SIGNUPS,
-	SAMPLE_ID_PREFIX,
-	isProtectedEmail,
-	isSampleEmail,
 } from "../scripts/seed-sample-plan";
 
 test("sample plan fills every staff list without touching test logins", () => {
@@ -46,7 +46,9 @@ test("sample plan fills every staff list without touching test logins", () => {
 	expect(partnerStatuses.has("rejected")).toBe(true);
 
 	const orderStatuses = new Set(SAMPLE_ORDERS.map((row) => row.status));
-	expect(orderStatuses).toEqual(new Set(["unpaid", "placed", "shipped", "cancelled"]));
+	expect(orderStatuses).toEqual(
+		new Set(["unpaid", "placed", "shipped", "cancelled"]),
+	);
 	const sides = new Set(SAMPLE_ORDERS.map((row) => row.side));
 	expect(sides).toEqual(new Set(["retail", "wholesale"]));
 
@@ -55,7 +57,8 @@ test("sample plan fills every staff list without touching test logins", () => {
 		expect(ids.has(order.id)).toBe(false);
 		ids.add(order.id);
 		expect(order.qty * order.unitCents).toBeGreaterThan(0);
-		if (order.side === "wholesale") expect(order.qty).toBeGreaterThanOrEqual(12);
+		if (order.side === "wholesale")
+			expect(order.qty).toBeGreaterThanOrEqual(12);
 		if (order.status === "shipped") {
 			expect(order.shipDate).toBeTruthy();
 			expect(order.trackingNumber).toBeTruthy();
@@ -77,7 +80,9 @@ test("sample plan fills every staff list without touching test logins", () => {
 	}
 
 	const signupStatuses = new Set(SAMPLE_SIGNUPS.map((row) => row.status));
-	expect(signupStatuses).toEqual(new Set(["pending", "confirmed", "unsubscribed"]));
+	expect(signupStatuses).toEqual(
+		new Set(["pending", "confirmed", "unsubscribed"]),
+	);
 	for (const row of SAMPLE_SIGNUPS) {
 		expect(isSampleEmail(row.email)).toBe(true);
 		expect(row.id.startsWith(SAMPLE_ID_PREFIX)).toBe(true);

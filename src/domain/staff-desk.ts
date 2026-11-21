@@ -21,6 +21,7 @@ export function quoteOnBehalf(input: {
 			ok: true,
 			quote: {
 				side: "retail",
+				purchasePlan: { kind: "one-time" },
 				qty: input.qty,
 				unitCents: unit,
 				totalCents: unit * input.qty,

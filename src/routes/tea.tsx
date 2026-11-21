@@ -7,7 +7,14 @@ import {
 	SHIP_WINDOW,
 	SUBSCRIPTION_CENTS,
 } from "#/domain/prices";
-import { buttonClass, Csrf, fieldClass, Page, Title } from "#/ui/site";
+import {
+	buttonClass,
+	Csrf,
+	fieldClass,
+	Page,
+	Title,
+	useShell,
+} from "#/ui/site";
 
 export const Route = createFileRoute("/tea")({
 	head: () => ({ meta: [{ title: "Tea, hmongtea.com" }] }),
@@ -15,6 +22,7 @@ export const Route = createFileRoute("/tea")({
 });
 
 function Tea() {
+	const shell = useShell();
 	return (
 		<Page>
 			<Title eyebrow="hmongtea.com" title={PRODUCT_NAME} />
@@ -108,25 +116,68 @@ function Tea() {
 						low. Net weight {NET_WEIGHT_LABEL}. Ships in {SHIP_WINDOW}.
 					</p>
 					<p data-testid="retail-price">
-						One pack is {formatUsd(RETAIL_CENTS)}. A subscription pack is{" "}
-						{formatUsd(SUBSCRIPTION_CENTS)}.
+						One pack is{" "}
+						<span data-ht="price-onetime">{formatUsd(RETAIL_CENTS)}</span>. A
+						subscription pack is{" "}
+						<span data-ht="price-subscribe">
+							{formatUsd(SUBSCRIPTION_CENTS)}
+						</span>
+						.
 					</p>
 					<form className="grid max-w-sm gap-4" method="post" action="/cart">
 						<Csrf />
+						<fieldset className="grid gap-3 border-0 p-0">
+							<legend>Choose a plan</legend>
+							<label
+								data-ht="plan-subscribe"
+								className="flex min-h-11 items-center gap-3"
+							>
+								<input
+									type="radio"
+									name="plan"
+									value="subscription"
+									defaultChecked={
+										shell.cartQty === 0 || shell.cartPlanKind === "subscription"
+									}
+								/>
+								Subscribe for {formatUsd(SUBSCRIPTION_CENTS)} a pack. Save $5.00
+								every order.
+							</label>
+							<label
+								data-ht="plan-onetime"
+								className="flex min-h-11 items-center gap-3"
+							>
+								<input
+									type="radio"
+									name="plan"
+									value="one-time"
+									defaultChecked={
+										shell.cartQty > 0 && shell.cartPlanKind === "one-time"
+									}
+								/>
+								Buy one pack for {formatUsd(RETAIL_CENTS)}.
+							</label>
+						</fieldset>
+						<p className="m-0 text-sm">
+							Subscribe: {formatUsd(SUBSCRIPTION_CENTS)} every{" "}
+							{shell.subscriptionIntervalWeeks} weeks. Cancel any time in your
+							account.
+						</p>
 						<label className="grid text-sm" htmlFor="qty">
 							Packs
 							<input
 								id="qty"
+								data-ht="qty"
 								className={fieldClass}
 								name="qty"
 								type="number"
 								min={1}
-								max={999}
+								max={12}
 								defaultValue={1}
 								required
 							/>
 						</label>
-						<button className={buttonClass} type="submit">
+						<button data-ht="add-to-cart" className={buttonClass} type="submit">
 							Add to cart
 						</button>
 					</form>

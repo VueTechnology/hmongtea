@@ -9,9 +9,9 @@ import {
 	wholesaleUnit,
 } from "#/domain/prices";
 
-test("retail pack price is $32.00", () => {
-	expect(formatUsd(RETAIL_CENTS)).toBe("$32.00");
-	expect(formatUsd(SUBSCRIPTION_CENTS)).toBe("$30.00");
+test("retail and subscription pack prices match the current offer", () => {
+	expect(formatUsd(RETAIL_CENTS)).toBe("$44.94");
+	expect(formatUsd(SUBSCRIPTION_CENTS)).toBe("$39.94");
 	expect(NET_WEIGHT_LABEL).toBe("4.4 oz (125 g)");
 	expect(SHIP_WINDOW).toBe("5 to 7 business days");
 });

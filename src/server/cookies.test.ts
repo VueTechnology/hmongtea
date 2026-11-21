@@ -2,9 +2,9 @@ import { expect, test } from "bun:test";
 import {
 	CART_COOKIE,
 	CSRF_COOKIE,
-	SESSION_COOKIE,
 	cookieIsSecure,
 	csrfCookie,
+	SESSION_COOKIE,
 	sessionCookie,
 } from "#/server/cookies";
 
@@ -23,9 +23,7 @@ test("session, csrf, and cart cookies use the __Host- prefix when Secure", () =>
 });
 
 test("cookies omit Secure and the __Host- prefix over plain http", () => {
-	const request = new Request(
-		"http://grokbots-ubuntu-desktop-0009:3299/login",
-	);
+	const request = new Request("http://grokbots-ubuntu-desktop-0009:3299/login");
 	expect(cookieIsSecure(request)).toBe(false);
 	const header = sessionCookie("abc", request);
 	expect(header.startsWith("hmongtea_session=abc;")).toBe(true);
@@ -44,9 +42,7 @@ test("X-Forwarded-Proto https and COOKIE_SECURE force Secure cookies", () => {
 	});
 	expect(cookieIsSecure(forwarded)).toBe(true);
 	expect(sessionCookie("abc", forwarded)).toContain("Secure");
-	expect(sessionCookie("abc", forwarded)).toContain(
-		"__Host-hmongtea_session=",
-	);
+	expect(sessionCookie("abc", forwarded)).toContain("__Host-hmongtea_session=");
 
 	const httpReq = new Request("http://127.0.0.1:3299/login");
 	expect(cookieIsSecure(httpReq)).toBe(false);

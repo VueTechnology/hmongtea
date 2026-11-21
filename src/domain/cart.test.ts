@@ -13,11 +13,38 @@ test("retail quotes use the retail price", () => {
 		accountSide: "retail",
 		accountStatus: "active",
 		orderSide: "retail",
+		purchasePlan: { kind: "one-time" },
 		qty: 2,
 	});
 	expect(quote).toEqual({
 		ok: true,
-		quote: { side: "retail", qty: 2, unitCents: 3200, totalCents: 6400 },
+		quote: {
+			side: "retail",
+			purchasePlan: { kind: "one-time" },
+			qty: 2,
+			unitCents: 4494,
+			totalCents: 8988,
+		},
+	});
+});
+
+test("subscription quotes use the recurring price and interval", () => {
+	const quote = quoteCart({
+		accountSide: "retail",
+		accountStatus: "active",
+		orderSide: "retail",
+		purchasePlan: { kind: "subscription", intervalWeeks: 4 },
+		qty: 2,
+	});
+	expect(quote).toEqual({
+		ok: true,
+		quote: {
+			side: "retail",
+			purchasePlan: { kind: "subscription", intervalWeeks: 4 },
+			qty: 2,
+			unitCents: 3994,
+			totalCents: 7988,
+		},
 	});
 });
 

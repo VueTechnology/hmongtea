@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { Database } from "#/db/client";
 import {
 	accounts,
@@ -12,12 +12,21 @@ import {
 	products,
 	sessions,
 	signups,
+	storeSettings,
 	suppressions,
 	unsubscribeTokens,
 } from "#/db/schema";
 import { type Quote, quoteCart } from "#/domain/cart";
 import { maskEin, parseEin } from "#/domain/ein";
 import { PRODUCT_NAME, PRODUCT_SKU } from "#/domain/prices";
+import {
+	dateAfterWeeks,
+	dateStringAfterWeeks,
+	makePurchasePlan,
+	type PlanKind,
+	type RetailCart,
+	type SubscriptionAction,
+} from "#/domain/purchase-plan";
 import { newId, newToken, sha256 } from "#/domain/secret";
 import type { AddressInput } from "#/domain/validate";
 import type { AppEnv } from "#/server/env";
@@ -273,31 +282,45 @@ export async function setCart(
 	db: Database,
 	accountId: string,
 	side: "retail" | "wholesale",
-	qty: number,
+	cart: RetailCart,
 ): Promise<void> {
-	if (qty <= 0) {
+	if (cart.qty <= 0 || side === "wholesale") {
 		await db.delete(carts).where(eq(carts.accountId, accountId));
 		return;
 	}
 	await db
 		.insert(carts)
-		.values({ accountId, side, qty, updatedAt: new Date() })
+		.values({
+			accountId,
+			side,
+			qty: cart.qty,
+			purchasePlan: cart.planKind,
+			updatedAt: new Date(),
+		})
 		.onConflictDoUpdate({
 			target: carts.accountId,
-			set: { side, qty, updatedAt: new Date() },
+			set: {
+				side,
+				qty: cart.qty,
+				purchasePlan: cart.planKind,
+				updatedAt: new Date(),
+			},
 		});
 }
 
-export async function readCartQty(
+export async function readCart(
 	db: Database,
 	accountId: string,
-): Promise<number> {
+): Promise<RetailCart> {
 	const rows = await db
 		.select()
 		.from(carts)
 		.where(eq(carts.accountId, accountId))
 		.limit(1);
-	return rows[0]?.qty ?? 0;
+	const row = rows[0];
+	return row
+		? { qty: row.qty, planKind: row.purchasePlan }
+		: { qty: 0, planKind: "one-time" };
 }
 
 export async function clearCart(
@@ -308,14 +331,16 @@ export async function clearCart(
 }
 
 export type PlaceInput = {
-	account: AccountRow;
+	account: AccountRow | null;
 	orderSide: "retail" | "wholesale";
 	qty: number;
 	contactName: string;
+	contactEmail: string;
 	phone: string;
 	address: AddressInput;
 	payment: "demo" | "stripe" | "net-terms-placeholder";
 	placedByStaffId?: string | null;
+	guestClaimHash?: string | null;
 };
 
 export class StockShort extends Error {}
@@ -366,13 +391,15 @@ export async function insertOrder(
 	if (!taken) throw new StockShort();
 	const id = newId();
 	const status = input.payment === "stripe" ? "unpaid" : "placed";
+	const purchasePlan =
+		quote.side === "retail" ? quote.purchasePlan : makePurchasePlan("one-time");
 	await db.insert(orders).values({
 		id,
-		accountId: input.account.id,
+		accountId: input.account?.id ?? null,
 		side: quote.side,
 		status,
 		contactName: input.contactName,
-		contactEmail: input.account.email,
+		contactEmail: input.contactEmail,
 		contactPhone: input.phone,
 		shipLine1: input.address.line1,
 		shipLine2: input.address.line2,
@@ -383,6 +410,15 @@ export async function insertOrder(
 		qty: quote.qty,
 		unitCents: quote.unitCents,
 		totalCents: quote.totalCents,
+		purchasePlan: purchasePlan.kind,
+		subscriptionStatus: purchasePlan.kind === "subscription" ? "active" : null,
+		subscriptionIntervalWeeks:
+			purchasePlan.kind === "subscription" ? purchasePlan.intervalWeeks : null,
+		nextOrderOn:
+			purchasePlan.kind === "subscription"
+				? dateAfterWeeks(new Date(), purchasePlan.intervalWeeks)
+				: null,
+		guestClaimHash: input.guestClaimHash ?? null,
 		paymentMode: input.payment,
 		netTerms: input.payment === "net-terms-placeholder",
 		placedByStaffId: input.placedByStaffId ?? null,
@@ -394,11 +430,22 @@ export function quoteForAccount(
 	account: AccountRow,
 	orderSide: "retail" | "wholesale",
 	qty: number,
+	planKind: PlanKind = "one-time",
+	intervalWeeks = 4,
 ) {
+	if (orderSide === "wholesale") {
+		return quoteCart({
+			accountSide: account.side,
+			accountStatus: account.status,
+			orderSide,
+			qty,
+		});
+	}
 	return quoteCart({
 		accountSide: account.side,
 		accountStatus: account.status,
 		orderSide,
+		purchasePlan: makePurchasePlan(planKind, intervalWeeks),
 		qty,
 	});
 }
@@ -476,10 +523,25 @@ function behalfQty(
 	const floor = current.side === "wholesale" ? 12 : 1;
 	if (!Number.isInteger(qty) || qty < floor || qty > 999)
 		return { ok: false, error: "qty" };
+	if (current.side === "retail") {
+		return {
+			ok: true,
+			quote: {
+				side: "retail",
+				purchasePlan: makePurchasePlan(
+					current.purchasePlan,
+					current.subscriptionIntervalWeeks ?? 4,
+				),
+				qty,
+				unitCents: current.unitCents,
+				totalCents: current.unitCents * qty,
+			},
+		};
+	}
 	return {
 		ok: true,
 		quote: {
-			side: current.side,
+			side: "wholesale",
 			qty,
 			unitCents: current.unitCents,
 			totalCents: current.unitCents * qty,
@@ -495,7 +557,7 @@ export async function updateOrderDetails(
 		contactPhone: string;
 		address: AddressInput;
 		qty?: number;
-		account: AccountRow;
+		account: AccountRow | null;
 	},
 ): Promise<"ok" | "missing" | "closed" | "qty"> {
 	const current = await getOrder(db, id);
@@ -506,9 +568,16 @@ export async function updateOrderDetails(
 	let totalCents = current.totalCents;
 	let qty = current.qty;
 	if (input.qty != null && input.qty !== current.qty) {
-		const quote = current.placedByStaffId
-			? behalfQty(current, input.qty)
-			: quoteForAccount(input.account, current.side, input.qty);
+		const quote =
+			current.placedByStaffId || !input.account
+				? behalfQty(current, input.qty)
+				: quoteForAccount(
+						input.account,
+						current.side,
+						input.qty,
+						current.purchasePlan,
+						current.subscriptionIntervalWeeks ?? 4,
+					);
 		if (!quote.ok) return "qty";
 		const delta = quote.quote.qty - current.qty;
 		if (delta > 0) {
@@ -553,7 +622,13 @@ export async function cancelOrder(
 		return "closed";
 	await db
 		.update(orders)
-		.set({ status: "cancelled", updatedAt: new Date() })
+		.set({
+			status: "cancelled",
+			subscriptionStatus:
+				current.purchasePlan === "subscription" ? "cancelled" : null,
+			nextOrderOn: null,
+			updatedAt: new Date(),
+		})
 		.where(eq(orders.id, id));
 	await giveStock(db, current.qty);
 	return "ok";
@@ -696,6 +771,132 @@ export async function readProduct(db: Database): Promise<{
 	const row = rows[0];
 	if (!row) return null;
 	return { sku: row.sku, name: row.name || PRODUCT_NAME, onHand: row.onHand };
+}
+
+export async function readSubscriptionInterval(db: Database): Promise<number> {
+	const rows = await db
+		.select()
+		.from(storeSettings)
+		.where(eq(storeSettings.id, 1))
+		.limit(1);
+	return rows[0]?.subscriptionIntervalWeeks ?? 4;
+}
+
+export async function setSubscriptionInterval(
+	db: Database,
+	intervalWeeks: number,
+): Promise<boolean> {
+	if (
+		!Number.isInteger(intervalWeeks) ||
+		intervalWeeks < 1 ||
+		intervalWeeks > 52
+	)
+		return false;
+	const rows = await db
+		.update(storeSettings)
+		.set({ subscriptionIntervalWeeks: intervalWeeks, updatedAt: new Date() })
+		.where(eq(storeSettings.id, 1))
+		.returning({ id: storeSettings.id });
+	return rows.length === 1;
+}
+
+export async function updateSubscription(
+	db: Database,
+	input: { orderId: string; accountId: string; action: SubscriptionAction },
+): Promise<"ok" | "missing" | "forbidden" | "closed" | "interval"> {
+	const current = await getOrder(db, input.orderId);
+	if (current?.purchasePlan !== "subscription") return "missing";
+	if (current.accountId !== input.accountId) return "forbidden";
+	if (input.action.kind === "cancel") {
+		if (current.subscriptionStatus === "cancelled") return "ok";
+		await db
+			.update(orders)
+			.set({
+				subscriptionStatus: "cancelled",
+				nextOrderOn: null,
+				updatedAt: new Date(),
+			})
+			.where(eq(orders.id, current.id));
+		return "ok";
+	}
+	if (
+		current.subscriptionStatus !== "active" ||
+		!current.nextOrderOn ||
+		!current.subscriptionIntervalWeeks
+	)
+		return "closed";
+	if (input.action.kind === "skip") {
+		await db
+			.update(orders)
+			.set({
+				nextOrderOn: dateStringAfterWeeks(
+					current.nextOrderOn,
+					current.subscriptionIntervalWeeks,
+				),
+				updatedAt: new Date(),
+			})
+			.where(eq(orders.id, current.id));
+		return "ok";
+	}
+	const intervalWeeks = input.action.intervalWeeks;
+	if (
+		!Number.isInteger(intervalWeeks) ||
+		intervalWeeks < 1 ||
+		intervalWeeks > 52
+	)
+		return "interval";
+	await db
+		.update(orders)
+		.set({
+			subscriptionIntervalWeeks: intervalWeeks,
+			nextOrderOn: dateAfterWeeks(new Date(), intervalWeeks),
+			updatedAt: new Date(),
+		})
+		.where(eq(orders.id, current.id));
+	return "ok";
+}
+
+export async function guestOrderClaimMatches(
+	db: Database,
+	input: { orderId: string; token: string; email: string },
+): Promise<boolean> {
+	if (!input.token) return false;
+	const rows = await db
+		.select({ id: orders.id })
+		.from(orders)
+		.where(
+			and(
+				eq(orders.id, input.orderId),
+				eq(orders.guestClaimHash, sha256(input.token)),
+				eq(orders.contactEmail, input.email),
+				isNull(orders.accountId),
+			),
+		)
+		.limit(1);
+	return rows.length === 1;
+}
+
+export async function claimGuestOrder(
+	db: Database,
+	input: { orderId: string; token: string; accountId: string; email: string },
+): Promise<boolean> {
+	const rows = await db
+		.update(orders)
+		.set({
+			accountId: input.accountId,
+			guestClaimHash: null,
+			updatedAt: new Date(),
+		})
+		.where(
+			and(
+				eq(orders.id, input.orderId),
+				eq(orders.guestClaimHash, sha256(input.token)),
+				eq(orders.contactEmail, input.email),
+				isNull(orders.accountId),
+			),
+		)
+		.returning({ id: orders.id });
+	return rows.length === 1;
 }
 
 export async function listWholesale(
