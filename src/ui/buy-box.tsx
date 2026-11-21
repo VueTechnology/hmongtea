@@ -23,7 +23,15 @@ export function BuyBox({ id }: { id: string }) {
 	useEffect(() => {
 		const form = formRef.current;
 		if (!form) return;
-		const update = () => setStickyVisible(form.getBoundingClientRect().top < 0);
+		const initialTop = form.getBoundingClientRect().top + window.scrollY;
+		const update = () => {
+			const header = Number.parseFloat(
+				getComputedStyle(document.documentElement).getPropertyValue(
+					"--layout-header",
+				),
+			);
+			setStickyVisible(form.getBoundingClientRect().top < initialTop - header);
+		};
 		update();
 		window.addEventListener("scroll", update, { passive: true });
 		window.addEventListener("resize", update);
