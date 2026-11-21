@@ -116,6 +116,12 @@ export async function seedSample(databaseUrl: string) {
 					taxIdLast4: "taxIdLast4" in person ? person.taxIdLast4 : "",
 					netTerms: "netTerms" in person ? person.netTerms : false,
 					emailOptOut: "emailOptOut" in person ? person.emailOptOut : false,
+					listedStore: "listedStore" in person ? person.listedStore : false,
+					storeCity: "storeCity" in person ? person.storeCity : "",
+					storeState: "storeState" in person ? person.storeState : "",
+					storeZip: "storeZip" in person ? person.storeZip : "",
+					storeDirections:
+						"storeDirections" in person ? person.storeDirections : "",
 					pricingTier: "pricingTier" in person ? person.pricingTier : null,
 					createdAt: person.createdAt,
 					updatedAt: now,

@@ -28,6 +28,11 @@ export const accounts = pgTable("accounts", {
 	taxIdLast4: text("tax_id_last4").notNull().default(""),
 	netTerms: boolean("net_terms").notNull().default(false),
 	emailOptOut: boolean("email_opt_out").notNull().default(false),
+	listedStore: boolean("listed_store").notNull().default(false),
+	storeCity: text("store_city").notNull().default(""),
+	storeState: text("store_state").notNull().default(""),
+	storeZip: text("store_zip").notNull().default(""),
+	storeDirections: text("store_directions").notNull().default(""),
 	pricingTier: text("pricing_tier").$type<"case" | "half" | "pallet">(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
 		.notNull()

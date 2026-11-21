@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { Database } from "#/db/client";
 import {
 	accounts,
@@ -739,6 +739,72 @@ export async function setNetTerms(
 	const rows = await db
 		.update(accounts)
 		.set({ netTerms, updatedAt: new Date() })
+		.where(
+			and(
+				eq(accounts.id, id),
+				eq(accounts.side, "wholesale"),
+				eq(accounts.status, "active"),
+			),
+		)
+		.returning({ id: accounts.id });
+	return rows.length === 1;
+}
+
+export async function listStores(db: Database): Promise<
+	{
+		id: string;
+		name: string;
+		city: string;
+		state: string;
+		zip: string;
+		directions: string;
+		sample: boolean;
+	}[]
+> {
+	const rows = await db
+		.select()
+		.from(accounts)
+		.where(
+			and(
+				eq(accounts.role, "customer"),
+				eq(accounts.side, "wholesale"),
+				eq(accounts.status, "active"),
+				eq(accounts.listedStore, true),
+			),
+		)
+		.orderBy(asc(accounts.storeCity), asc(accounts.storeState));
+	return rows.map((row) => ({
+		id: row.id,
+		name: row.dba || row.legalName || row.businessAddress,
+		city: row.storeCity,
+		state: row.storeState,
+		zip: row.storeZip,
+		directions: row.storeDirections,
+		sample: row.id.startsWith("c0870000-") || row.email.startsWith("sample-"),
+	}));
+}
+
+export async function setStoreListing(
+	db: Database,
+	id: string,
+	input: {
+		listed: boolean;
+		city: string;
+		state: string;
+		zip: string;
+		directions: string;
+	},
+): Promise<boolean> {
+	const rows = await db
+		.update(accounts)
+		.set({
+			listedStore: input.listed,
+			storeCity: input.city,
+			storeState: input.state,
+			storeZip: input.zip,
+			storeDirections: input.directions,
+			updatedAt: new Date(),
+		})
 		.where(
 			and(
 				eq(accounts.id, id),

@@ -18,6 +18,7 @@ import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as PreOrderRouteImport } from './routes/pre-order'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetRouteImport } from './routes/reset'
+import { Route as StoresRouteImport } from './routes/stores'
 import { Route as TeaRouteImport } from './routes/tea'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
@@ -94,6 +95,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const ResetRoute = ResetRouteImport.update({
   id: '/reset',
   path: '/reset',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoresRoute = StoresRouteImport.update({
+  id: '/stores',
+  path: '/stores',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeaRoute = TeaRouteImport.update({
@@ -267,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/pre-order': typeof PreOrderRoute
   '/register': typeof RegisterRoute
   '/reset': typeof ResetRoute
+  '/stores': typeof StoresRoute
   '/tea': typeof TeaRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/checkout/done': typeof CheckoutDoneRoute
@@ -310,6 +317,7 @@ export interface FileRoutesByTo {
   '/pre-order': typeof PreOrderRoute
   '/register': typeof RegisterRoute
   '/reset': typeof ResetRoute
+  '/stores': typeof StoresRoute
   '/tea': typeof TeaRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/checkout/done': typeof CheckoutDoneRoute
@@ -354,6 +362,7 @@ export interface FileRoutesById {
   '/pre-order': typeof PreOrderRoute
   '/register': typeof RegisterRoute
   '/reset': typeof ResetRoute
+  '/stores': typeof StoresRoute
   '/tea': typeof TeaRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/checkout/done': typeof CheckoutDoneRoute
@@ -399,6 +408,7 @@ export interface FileRouteTypes {
     | '/pre-order'
     | '/register'
     | '/reset'
+    | '/stores'
     | '/tea'
     | '/unsubscribe'
     | '/checkout/done'
@@ -442,6 +452,7 @@ export interface FileRouteTypes {
     | '/pre-order'
     | '/register'
     | '/reset'
+    | '/stores'
     | '/tea'
     | '/unsubscribe'
     | '/checkout/done'
@@ -485,6 +496,7 @@ export interface FileRouteTypes {
     | '/pre-order'
     | '/register'
     | '/reset'
+    | '/stores'
     | '/tea'
     | '/unsubscribe'
     | '/checkout/done'
@@ -529,6 +541,7 @@ export interface RootRouteChildren {
   PreOrderRoute: typeof PreOrderRoute
   RegisterRoute: typeof RegisterRoute
   ResetRoute: typeof ResetRoute
+  StoresRoute: typeof StoresRoute
   TeaRoute: typeof TeaRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   CheckoutDoneRoute: typeof CheckoutDoneRoute
@@ -626,6 +639,13 @@ declare module '@tanstack/react-router' {
       path: '/reset'
       fullPath: '/reset'
       preLoaderRoute: typeof ResetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stores': {
+      id: '/stores'
+      path: '/stores'
+      fullPath: '/stores'
+      preLoaderRoute: typeof StoresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tea': {
@@ -865,6 +885,7 @@ const rootRouteChildren: RootRouteChildren = {
   PreOrderRoute: PreOrderRoute,
   RegisterRoute: RegisterRoute,
   ResetRoute: ResetRoute,
+  StoresRoute: StoresRoute,
   TeaRoute: TeaRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   CheckoutDoneRoute: CheckoutDoneRoute,

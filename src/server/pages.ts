@@ -23,6 +23,7 @@ import {
 	listMail,
 	listRetail,
 	listSignups,
+	listStores,
 	listWholesale,
 	maskForAccount,
 	type OrderRow,
@@ -179,6 +180,20 @@ export async function readCatalog() {
 		moq: MOQ,
 		tiers: WHOLESALE_TIERS,
 	};
+}
+
+export async function publicStores(query: string) {
+	const q = query.trim().toLowerCase();
+	const stores = await listStores(getDb());
+	const filtered = q
+		? stores.filter(
+				(s) =>
+					s.city.toLowerCase().includes(q) ||
+					s.state.toLowerCase().includes(q) ||
+					s.zip.includes(q),
+			)
+		: stores;
+	return { stores: filtered };
 }
 
 export type Gate<T> =
@@ -368,6 +383,11 @@ export async function staffWholesaleDetail(session: string, id: string) {
 			taxId: revealTaxId(account, readEnv()),
 			taxMask: maskForAccount(account),
 			netTerms: account.netTerms,
+			listedStore: account.listedStore,
+			storeCity: account.storeCity,
+			storeState: account.storeState,
+			storeZip: account.storeZip,
+			storeDirections: account.storeDirections,
 		},
 	};
 }

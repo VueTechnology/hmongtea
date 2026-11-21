@@ -75,6 +75,7 @@ import {
 	setCart,
 	setNetTerms,
 	setStock,
+	setStoreListing,
 	setSubscriptionInterval,
 	shipOrder,
 	updateAccountContact,
@@ -745,6 +746,35 @@ async function staffWholesalePost(
 	return redirect(`${back}?saved=1`);
 }
 
+async function staffWholesaleStorePost(
+	id: string,
+	fields: Record<string, string>,
+	viewer: Viewer,
+): Promise<Response> {
+	const back = `/staff/wholesale/${id}`;
+	const parse = (key: string, max: number) => {
+		const value = typeof fields[key] === "string" ? fields[key].trim() : "";
+		return value.slice(0, max);
+	};
+	const ok = await setStoreListing(getDb(), id, {
+		listed: fields.listed === "1",
+		city: parse("storeCity", 80),
+		state: parse("storeState", 40),
+		zip: parse("storeZip", 12),
+		directions: parse("storeDirections", 500),
+	});
+	if (!ok) return redirect(`${back}?error=pending`);
+	await audit(
+		getDb(),
+		viewer.id,
+		"wholesale.store_listing",
+		"account",
+		id,
+		fields.listed === "1" ? "listed" : "unlisted",
+	);
+	return redirect(`${back}?saved=1`);
+}
+
 async function blastPost(
 	fields: Record<string, string>,
 	viewer: Viewer,
@@ -973,8 +1003,11 @@ export async function handlePost(request: Request): Promise<Response> {
 	const staffOrder = path.match(/^\/staff\/orders\/([0-9a-f-]{36})$/i);
 	if (staffOrder?.[1]) return staffOrderPost(staffOrder[1], fields, viewer);
 	const staffWholesale = path.match(/^\/staff\/wholesale\/([0-9a-f-]{36})$/i);
-	if (staffWholesale?.[1])
+	if (staffWholesale?.[1]) {
+		if (fields.action === "store")
+			return staffWholesaleStorePost(staffWholesale[1], fields, viewer);
 		return staffWholesalePost(staffWholesale[1], fields, viewer);
+	}
 	if (path === "/staff/accounts") return staffCreatePost(fields, viewer, env);
 	if (path === "/staff/orders/new") return staffBehalfPost(fields, viewer);
 	if (path === "/staff/password-reset")

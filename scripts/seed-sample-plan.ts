@@ -66,6 +66,11 @@ export type SamplePartner = {
 	resaleCertificate: string;
 	taxIdLast4: string;
 	netTerms: boolean;
+	listedStore?: boolean;
+	storeCity?: string;
+	storeState?: string;
+	storeZip?: string;
+	storeDirections?: string;
 	pricingTier: "case" | "half" | "pallet" | null;
 	createdAt: Date;
 	shipLine1: string;
@@ -444,6 +449,11 @@ export const SAMPLE_PARTNERS: SamplePartner[] = [
 		resaleCertificate: "MN-RES-44102",
 		taxIdLast4: "4410",
 		netTerms: false,
+		listedStore: true,
+		storeCity: "Saint Paul",
+		storeState: "MN",
+		storeZip: "55103",
+		storeDirections: "https://maps.example.com/sunrise-market",
 		pricingTier: "case",
 		createdAt: daysAgo(57),
 		shipLine1: "441 University Ave W",
@@ -467,6 +477,11 @@ export const SAMPLE_PARTNERS: SamplePartner[] = [
 		resaleCertificate: "CA-RES-77821",
 		taxIdLast4: "7782",
 		netTerms: true,
+		listedStore: true,
+		storeCity: "Fresno",
+		storeState: "CA",
+		storeZip: "93720",
+		storeDirections: "https://maps.example.com/golden-bowl",
 		pricingTier: "half",
 		createdAt: daysAgo(53),
 		shipLine1: "7890 N Blackstone Ave",

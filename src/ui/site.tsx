@@ -54,6 +54,7 @@ export function SiteFrame({ children }: { children: ReactNode }) {
 			: [
 					{ to: "/", label: "Shop" },
 					{ to: "/tea", label: "Tea" },
+					{ to: "/stores", label: "Stores" },
 					...(viewer
 						? [{ to: "/account", label: "Account" }]
 						: [{ to: "/login", label: "Log in" }]),
@@ -134,6 +135,7 @@ export function SiteFrame({ children }: { children: ReactNode }) {
 					</div>
 					<div className="stack">
 						<Link to="/tea">Tea</Link>
+						<Link to="/stores">Stores</Link>
 						<Link to="/wholesale/register">Wholesale</Link>
 					</div>
 				</div>

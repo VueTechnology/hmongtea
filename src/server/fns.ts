@@ -176,6 +176,15 @@ export const loadStaffWholesale = createServerFn({ method: "GET" })
 		return page;
 	});
 
+export const loadStores = createServerFn({ method: "GET" })
+	.validator((data: unknown) =>
+		typeof data === "string" ? data.slice(0, 12) : "",
+	)
+	.handler(async ({ data }) => {
+		const { publicStores } = await import("#/server/pages");
+		return publicStores(data);
+	});
+
 export const loadStaffWholesaleAccount = createServerFn({ method: "GET" })
 	.validator((data: unknown) => (typeof data === "string" ? data : ""))
 	.handler(async ({ data }) => {
