@@ -7,6 +7,9 @@ export type Notes = {
 	shipped?: string;
 	deleted?: string;
 	reset?: string;
+	claimed?: string;
+	order?: string;
+	claim?: string;
 	q?: string;
 	side?: string;
 	status?: string;
@@ -33,6 +36,9 @@ export function noteSearch(search: Record<string, unknown>): Notes {
 	flag("shipped", search.shipped);
 	flag("deleted", search.deleted);
 	flag("reset", search.reset);
+	flag("claimed", search.claimed);
+	text("order", search.order, 40);
+	text("claim", search.claim, 200);
 	text("q", search.q, 120);
 	text("side", search.side, 20);
 	text("status", search.status, 20);

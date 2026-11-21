@@ -15,12 +15,19 @@ async function POST({ request }: { request: Request }) {
 }
 
 function Register() {
+	const notes = Route.useSearch();
 	return (
 		<Page>
 			<Title eyebrow="Retail" title="Create an account" />
-			<Notes notes={Route.useSearch()} />
+			<Notes notes={notes} />
 			<form className="grid max-w-md gap-4" method="post" action="/register">
 				<Csrf />
+				{notes.order ? (
+					<input type="hidden" name="order" value={notes.order} />
+				) : null}
+				{notes.claim ? (
+					<input type="hidden" name="claim" value={notes.claim} />
+				) : null}
 				<Field label="Name" name="name" required autoComplete="name" />
 				<Field
 					label="Email"

@@ -856,26 +856,6 @@ export async function updateSubscription(
 	return "ok";
 }
 
-export async function guestOrderClaimMatches(
-	db: Database,
-	input: { orderId: string; token: string; email: string },
-): Promise<boolean> {
-	if (!input.token) return false;
-	const rows = await db
-		.select({ id: orders.id })
-		.from(orders)
-		.where(
-			and(
-				eq(orders.id, input.orderId),
-				eq(orders.guestClaimHash, sha256(input.token)),
-				eq(orders.contactEmail, input.email),
-				isNull(orders.accountId),
-			),
-		)
-		.limit(1);
-	return rows.length === 1;
-}
-
 export async function claimGuestOrder(
 	db: Database,
 	input: { orderId: string; token: string; accountId: string; email: string },

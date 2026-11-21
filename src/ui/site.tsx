@@ -179,23 +179,25 @@ export function Notice({ children }: { children: ReactNode }) {
 
 export function Notes({ notes }: { notes: SearchNotes }) {
 	const error = notes.error ? errors[notes.error] : "";
-	const success = notes.reset
-		? "If that email is on file, a reset link is on its way."
-		: notes.saved
-			? savedText
-			: notes.cancelled
-				? cancelledText
-				: notes.shipped
-					? shippedText
-					: notes.deleted
-						? deletedText
-						: notes.joined === "1"
-							? "Check your email and confirm the request. With no Resend key, the message is on the dev mail page."
-							: notes.joined === "already"
-								? "That email is already confirmed."
-								: notes.sent
-									? `The blast was recorded for ${notes.sent} recipients.`
-									: "";
+	const success = notes.claimed
+		? "The order is linked to your account."
+		: notes.reset
+			? "If that email is on file, a reset link is on its way."
+			: notes.saved
+				? savedText
+				: notes.cancelled
+					? cancelledText
+					: notes.shipped
+						? shippedText
+						: notes.deleted
+							? deletedText
+							: notes.joined === "1"
+								? "Check your email and confirm the request. With no Resend key, the message is on the dev mail page."
+								: notes.joined === "already"
+									? "That email is already confirmed."
+									: notes.sent
+										? `The blast was recorded for ${notes.sent} recipients.`
+										: "";
 	if (!error && !success) return null;
 	return <Notice>{error || success}</Notice>;
 }

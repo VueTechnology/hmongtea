@@ -1,15 +1,17 @@
 import { getDb } from "#/db/client";
+import { quoteCart } from "#/domain/cart";
 import { parseEin } from "#/domain/ein";
 import { readPaymentGate } from "#/domain/payment-gate";
 import { portalHome, portalOf } from "#/domain/portal";
 import { parsePartnerTier } from "#/domain/prices";
 import {
+	makePurchasePlan,
 	parseIntervalWeeks,
 	parsePlanKind,
 	parseRetailCartCookie,
 	type SubscriptionAction,
 } from "#/domain/purchase-plan";
-import { newToken, tokenEquals } from "#/domain/secret";
+import { newToken, sha256, tokenEquals } from "#/domain/secret";
 import { paidOrderId, readStripeEvent } from "#/domain/stripe-event";
 import {
 	parseAddress,
@@ -47,6 +49,7 @@ import {
 import {
 	audit,
 	cancelOrder,
+	claimGuestOrder,
 	clearCart,
 	createAccount,
 	deleteCancelledOrder,
@@ -182,6 +185,25 @@ function sessionCookies(
 	];
 }
 
+async function claimQuery(
+	fields: Record<string, string>,
+	account: { id: string; email: string },
+): Promise<string> {
+	const orderId = fields.order ?? "";
+	const token = fields.claim ?? "";
+	if (!orderId && !token) return "";
+	if (!/^[0-9a-f-]{36}$/i.test(orderId) || token.length < 20) {
+		return "error=claim";
+	}
+	const claimed = await claimGuestOrder(getDb(), {
+		orderId,
+		token,
+		accountId: account.id,
+		email: account.email,
+	});
+	return claimed ? "claimed=1" : "error=claim";
+}
+
 type Door = "retail" | "wholesale" | "staff" | "any";
 
 function doorPath(door: Door): string {
@@ -242,8 +264,13 @@ async function login(
 	}
 	if (account.role === "staff")
 		await audit(getDb(), account.id, "staff.login", "session", account.id);
-	const dest = door === "any" ? portalHome(portal) : doorPathHome(door);
-	return redirect(dest, sessionCookies(request, session, extra));
+	const home = door === "any" ? portalHome(portal) : doorPathHome(door);
+	const claimed =
+		portal === "customer" ? await claimQuery(fields, account) : "";
+	return redirect(
+		claimed ? `${home}?${claimed}` : home,
+		sessionCookies(request, session, extra),
+	);
 }
 
 function doorPathHome(door: Door): string {
@@ -282,7 +309,11 @@ async function registerRetail(
 	});
 	if (!created.ok) return redirect("/register?error=taken");
 	const session = await openSession(getDb(), created.id);
-	return redirect("/account", sessionCookies(request, session));
+	const claimed = await claimQuery(fields, { id: created.id, email });
+	return redirect(
+		claimed ? `/account?${claimed}` : "/account",
+		sessionCookies(request, session),
+	);
 }
 
 async function registerWholesale(
@@ -370,31 +401,37 @@ async function saveCart(
 }
 
 async function checkout(
+	request: Request,
 	fields: Record<string, string>,
 	viewer: Viewer | null,
 	env: AppEnv,
 ): Promise<Response> {
-	if (!viewer) return redirect("/login");
-	if (viewer.role !== "customer" || viewer.side !== "retail")
+	if (viewer && (viewer.role !== "customer" || viewer.side !== "retail"))
 		return forbidden();
-	const account = await findAccountById(getDb(), viewer.id);
-	if (!account) return redirect("/login");
-	const cart = await readCart(getDb(), viewer.id);
+	const account = viewer ? await findAccountById(getDb(), viewer.id) : null;
+	if (viewer && !account) return redirect("/login");
+	const cart = account
+		? await readCart(getDb(), account.id)
+		: parseRetailCartCookie(readCartCookie(request.headers.get("cookie")));
 	const qty = cart.qty;
 	const intervalWeeks = await readSubscriptionInterval(getDb());
+	const email = account?.email ?? parseEmail(fields.email);
 	const name = parseName(fields.contactName, true);
 	const phone = parsePhone(fields.phone, false);
 	const address = parseAddress(fields);
+	if (!email) return redirect("/checkout?error=email");
 	if (!name) return redirect("/checkout?error=name");
 	if (phone == null) return redirect("/checkout?error=phone");
 	if (!address) return redirect("/checkout?error=address");
-	const quote = quoteForAccount(
-		account,
-		"retail",
-		qty,
-		cart.planKind,
-		intervalWeeks,
-	);
+	const quote = account
+		? quoteForAccount(account, "retail", qty, cart.planKind, intervalWeeks)
+		: quoteCart({
+				accountSide: "retail",
+				accountStatus: "active",
+				orderSide: "retail",
+				purchasePlan: makePurchasePlan(cart.planKind, intervalWeeks),
+				qty,
+			});
 	if (!quote.ok) return redirect("/checkout?error=empty");
 	const gate = readPaymentGate({
 		STRIPE_SECRET_KEY: env.stripeSecret,
@@ -403,6 +440,7 @@ async function checkout(
 	});
 	if (gate.kind === "refused") return redirect("/checkout?error=payment");
 	const payment = gate.kind === "demo" ? "demo" : "stripe";
+	const claim = account ? "" : newToken();
 	let orderId: string;
 	try {
 		orderId = await insertOrder(
@@ -412,10 +450,11 @@ async function checkout(
 				orderSide: "retail",
 				qty,
 				contactName: name,
-				contactEmail: account.email,
+				contactEmail: email,
 				phone,
 				address,
 				payment,
+				guestClaimHash: claim ? sha256(claim) : null,
 			},
 			quote.quote,
 		);
@@ -423,10 +462,13 @@ async function checkout(
 		if (error instanceof StockShort) return redirect("/checkout?error=stock");
 		throw error;
 	}
-	await clearCart(getDb(), viewer.id);
-	if (payment === "stripe")
-		return redirect(`/checkout/done?order=${orderId}&payment=stripe`);
-	return redirect(`/checkout/done?order=${orderId}`);
+	const cookies: string[] = [];
+	if (account) await clearCart(getDb(), account.id);
+	else cookies.push(clearCartCookie(request));
+	const done = new URLSearchParams({ order: orderId });
+	if (payment === "stripe") done.set("payment", "stripe");
+	if (claim) done.set("claim", claim);
+	return redirect(`/checkout/done?${done}`, cookies);
 }
 
 async function placeWholesale(
@@ -918,7 +960,7 @@ export async function handlePost(request: Request): Promise<Response> {
 		return redirect("/?joined=1");
 	}
 	if (path === "/cart") return saveCart(request, fields, viewer);
-	if (path === "/checkout") return checkout(fields, viewer, env);
+	if (path === "/checkout") return checkout(request, fields, viewer, env);
 	if (path === "/wholesale/order") return placeWholesale(fields, viewer, env);
 	if (path === "/account" || path === "/wholesale/desk")
 		return saveContact(fields, viewer);

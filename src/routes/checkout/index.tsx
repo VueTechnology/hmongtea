@@ -34,7 +34,8 @@ function Checkout() {
 	const viewer = shell.viewer;
 	const qty = shell.cartQty;
 	const unitCents = planUnitCents(shell.cartPlanKind);
-	const retail = viewer?.role === "customer" && viewer.side === "retail";
+	const retail =
+		!viewer || (viewer.role === "customer" && viewer.side === "retail");
 	return (
 		<Page>
 			<Title eyebrow="Retail" title="Checkout" />
@@ -48,12 +49,7 @@ function Checkout() {
 					test pair.
 				</p>
 			) : null}
-			{!viewer ? (
-				<p>
-					<Link to="/login">Log in</Link> or{" "}
-					<Link to="/register">register</Link> before checkout.
-				</p>
-			) : null}
+			{!viewer ? <p>Checkout as a guest. No account is required.</p> : null}
 			{viewer && !retail ? (
 				<p>Partner accounts order from the partner desk.</p>
 			) : null}
@@ -75,11 +71,22 @@ function Checkout() {
 						</span>
 						.
 					</p>
+					{viewer ? (
+						<p className="m-0">Order email {viewer.email}.</p>
+					) : (
+						<Field
+							label="Email"
+							name="email"
+							type="email"
+							required
+							autoComplete="email"
+						/>
+					)}
 					<Field
 						label="Contact name"
 						name="contactName"
 						required
-						defaultValue={viewer.name}
+						defaultValue={viewer?.name ?? ""}
 						autoComplete="name"
 					/>
 					<AddressFields />

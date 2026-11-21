@@ -420,6 +420,132 @@ test("postgres backend", async () => {
 	);
 	expect(otherRead.kind).toBe("forbidden");
 
+	const guestIssued = await issueCsrf();
+	let guestCookie = guestIssued.cookie;
+	const guestCart = await handlePost(
+		post(
+			"/cart",
+			{ csrf: guestIssued.token, qty: "1", plan: "subscription" },
+			guestCookie,
+			"203.0.113.30",
+		),
+	);
+	guestCookie = jar(guestCart, guestCookie);
+	const guestCheckout = await handlePost(
+		post(
+			"/checkout",
+			{
+				csrf: csrfOf(guestCookie),
+				email: "guest@example.com",
+				contactName: "Guest Buyer",
+				...address,
+			},
+			guestCookie,
+			"203.0.113.31",
+		),
+	);
+	expect(guestCheckout.status).toBe(303);
+	const guestDone = new URL(
+		guestCheckout.headers.get("location") ?? "",
+		"http://127.0.0.1:3190",
+	);
+	const guestOrderId = guestDone.searchParams.get("order") ?? "";
+	const guestClaim = guestDone.searchParams.get("claim") ?? "";
+	expect(guestOrderId).toMatch(/[0-9a-f-]{36}/);
+	expect(guestClaim.length).toBeGreaterThan(20);
+	const guestRow = await store.getOrder(db, guestOrderId);
+	expect(guestRow?.accountId).toBeNull();
+	expect(guestRow?.contactEmail).toBe("guest@example.com");
+	expect(guestRow?.purchasePlan).toBe("subscription");
+	expect(guestRow?.unitCents).toBe(3994);
+	expect(guestRow?.totalCents).toBe(3994);
+	expect(guestRow?.guestClaimHash).not.toBe(guestClaim);
+	const guestDenied = await pages.orderPage(
+		readSessionToken(otherCookie) ?? "",
+		guestOrderId,
+	);
+	expect(guestDenied.kind).toBe("forbidden");
+	const otherAccount = await store.findAccountByEmail(db, "bao@example.com");
+	if (!otherAccount) throw new Error("missing other account");
+	expect(
+		await store.claimGuestOrder(db, {
+			orderId: guestOrderId,
+			token: guestClaim,
+			accountId: otherAccount.id,
+			email: otherAccount.email,
+		}),
+	).toBe(false);
+	expect((await store.getOrder(db, guestOrderId))?.accountId).toBeNull();
+
+	const guestRegistration = await handlePost(
+		post(
+			"/register",
+			{
+				csrf: csrfOf(guestCookie),
+				email: "guest@example.com",
+				password: `guest-${randomUUID()}`,
+				name: "Guest Buyer",
+				phone: "",
+				order: guestOrderId,
+				claim: guestClaim,
+			},
+			guestCookie,
+			"203.0.113.32",
+		),
+	);
+	expect(guestRegistration.headers.get("location")).toBe("/account?claimed=1");
+	guestCookie = jar(guestRegistration, guestCookie);
+	const guestAccount = await store.findAccountByEmail(db, "guest@example.com");
+	if (!guestAccount) throw new Error("missing claimed guest account");
+	const claimedRow = await store.getOrder(db, guestOrderId);
+	expect(claimedRow?.accountId).toBe(guestAccount.id);
+	expect(claimedRow?.guestClaimHash).toBeNull();
+	const originalNextOrder = claimedRow?.nextOrderOn ?? "";
+	const skippedSubscription = await handlePost(
+		post(
+			`/account/orders/${guestOrderId}`,
+			{ csrf: csrfOf(guestCookie), action: "skip" },
+			guestCookie,
+			"203.0.113.33",
+		),
+	);
+	expect(skippedSubscription.headers.get("location")).toContain("saved=1");
+	expect((await store.getOrder(db, guestOrderId))?.nextOrderOn).not.toBe(
+		originalNextOrder,
+	);
+	const changed = await handlePost(
+		post(
+			`/account/orders/${guestOrderId}`,
+			{
+				csrf: csrfOf(guestCookie),
+				action: "change-interval",
+				intervalWeeks: "6",
+			},
+			guestCookie,
+			"203.0.113.34",
+		),
+	);
+	expect(changed.headers.get("location")).toContain("saved=1");
+	expect(
+		(await store.getOrder(db, guestOrderId))?.subscriptionIntervalWeeks,
+	).toBe(6);
+	const subscriptionCancelled = await handlePost(
+		post(
+			`/account/orders/${guestOrderId}`,
+			{ csrf: csrfOf(guestCookie), action: "cancel-subscription" },
+			guestCookie,
+			"203.0.113.35",
+		),
+	);
+	expect(subscriptionCancelled.headers.get("location")).toContain(
+		"cancelled=1",
+	);
+	const cancelledRow = await store.getOrder(db, guestOrderId);
+	expect(cancelledRow?.status).toBe("placed");
+	expect(cancelledRow?.subscriptionStatus).toBe("cancelled");
+	expect(cancelledRow?.nextOrderOn).toBeNull();
+	expect(await store.cancelOrder(db, guestOrderId, guestAccount.id)).toBe("ok");
+
 	const customerStaff = await handlePost(
 		post(
 			"/staff/blasts",
