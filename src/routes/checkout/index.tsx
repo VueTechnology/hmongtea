@@ -65,7 +65,8 @@ function Checkout() {
 						{shell.cartPlanKind === "subscription"
 							? `Subscription, every ${shell.subscriptionIntervalWeeks} weeks. `
 							: "One-time purchase. "}
-						{qty} {qty === 1 ? "pack" : "packs"} at {formatUsd(unitCents)}. Total{" "}
+						{qty} {qty === 1 ? "pack" : "packs"} at {formatUsd(unitCents)}.
+						Total{" "}
 						<span data-ht="order-total" data-testid="order-total">
 							{formatUsd(qty * unitCents)}
 						</span>

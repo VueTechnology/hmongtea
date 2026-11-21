@@ -50,8 +50,8 @@ function Account() {
 							{order.createdAt.slice(0, 10)}
 						</Link>
 						<p className="m-0 mt-2 text-sm">
-							<Status value={order.status} />,{" "}
-							{order.qty} {order.qty === 1 ? "pack" : "packs"},{" "}
+							<Status value={order.status} />, {order.qty}{" "}
+							{order.qty === 1 ? "pack" : "packs"},{" "}
 							<Money cents={order.totalCents} />
 						</p>
 						{order.purchasePlan === "subscription" ? (
