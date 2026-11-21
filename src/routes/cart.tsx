@@ -1,6 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { formatUsd } from "#/domain/money";
-import { planUnitCents } from "#/domain/prices";
+import {
+	planUnitCents,
+	RETAIL_CENTS,
+	SUBSCRIPTION_CENTS,
+} from "#/domain/prices";
 import { noteSearch } from "#/ui/search";
 import {
 	buttonClass,
@@ -36,9 +40,26 @@ function CartPage() {
 			<Title eyebrow="Retail" title="Cart" />
 			<Notes notes={notes} />
 			{qty < 1 ? (
-				<p>
-					Your cart is empty. <Link to="/tea">See the tea.</Link>
-				</p>
+				<div className="grid max-w-md gap-4 border border-line bg-paper p-6">
+					<img
+						src="/products/pack-hero.webp"
+						alt="Front of the KuabCha pack"
+						width={387}
+						height={600}
+						className="mx-auto w-28"
+					/>
+					<p className="m-0">
+						Your cart is empty. Whole leaves, nothing else, from the hills of
+						Chiang Rai.
+					</p>
+					<p className="m-0">
+						One pack is {formatUsd(RETAIL_CENTS)}. Subscribe for{" "}
+						{formatUsd(SUBSCRIPTION_CENTS)} a pack.
+					</p>
+					<Link className={buttonClass} to="/tea">
+						Choose your pack
+					</Link>
+				</div>
 			) : (
 				<div
 					className="grid max-w-lg gap-4 border border-line bg-paper p-4"

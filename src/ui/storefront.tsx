@@ -67,7 +67,7 @@ export function UnfurlProof() {
 const benefits = [
 	{
 		title: "The top three leaves",
-		body: "Each day, only the top three young leaves are picked from each tree. They are the most tender leaves on the plant.",
+		body: "Each day, only the top three young leaves are hand-picked from each tree. They are the most tender leaves on the plant.",
 		image: "/products/field.jpg",
 		alt: "Young tea leaves on a Chiang Rai hillside",
 	},
@@ -79,7 +79,7 @@ const benefits = [
 	},
 	{
 		title: "Never burnt",
-		body: "Made the natural way, so the leaf stays green.",
+		body: "Naturally processed, never burnt, so the leaf stays green.",
 		image: "/products/brew.jpg",
 		alt: "Green KuabCha tea in a cup",
 	},
@@ -118,8 +118,10 @@ export function BenefitPillars() {
 					))}
 				</div>
 				<ul className="chip-list" aria-label="More tea facts">
+					<li>One ingredient</li>
 					<li>Whole leaves</li>
 					<li>Low in caffeine</li>
+					<li>Hand-picked</li>
 					<li>Arrives fresh</li>
 				</ul>
 			</div>
@@ -150,7 +152,10 @@ export function OriginHeritage() {
 						KuabCha comes from the Golden Triangle foothills in Chiang Rai,
 						Thailand, where it grows on the hills among the forest.
 					</p>
-					<p>Buy it here, or look for it at your local Hmong store.</p>
+					<p>
+						Grown on one farm and sold straight to you, farm-direct. Buy it
+						here, or look for it at your local Hmong store.
+					</p>
 					<div className="story-slot">
 						<img
 							src="/products/pack-hero.webp"
@@ -222,7 +227,7 @@ const brewSteps = [
 	},
 	{
 		title: "Watch and taste",
-		body: "Steep 2 to 3 minutes, then taste. Watch the leaves open while you wait.",
+		body: "Steep 2 to 3 minutes, then taste. Re-steep the leaves when you are ready for more. Watch them open while you wait.",
 		image: "/products/brew.jpg",
 		alt: "A cup of KuabCha green tea",
 	},
