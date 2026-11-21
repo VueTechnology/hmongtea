@@ -42,6 +42,8 @@
 	--type-callout: 16px;
 	--type-footnote: 13px;
 	--type-caption: 12px;
+	--type-display-hero: 84px;
+	--type-display-mobile: 38px;
 	--space-1: 4px;
 	--space-2: 8px;
 	--space-3: 12px;
@@ -68,6 +70,8 @@
 	--layout-content: 1280px;
 	--layout-reading: 680px;
 	--layout-header: 64px;
+	--layout-hero-media-max: 560px;
+	--layout-hero-media-mobile: 150px;
 	--border-thin: 1px;
 	--border-focus: 2px;
 	--breakpoint-medium: 600px;

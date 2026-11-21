@@ -517,7 +517,7 @@ export function ProductGallery() {
 
 export function ProductHero() {
 	return (
-		<section className="section" aria-labelledby="tea-title">
+		<section className="hero-section" aria-labelledby="tea-title">
 			<div className="wrap hero-grid">
 				<div className="hero-intro">
 					<p className="eyebrow">KuabCha whole-leaf green tea</p>
