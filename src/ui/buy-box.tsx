@@ -22,17 +22,15 @@ export function BuyBox({ id }: { id: string }) {
 
 	useEffect(() => {
 		const form = formRef.current;
-		if (!form || !("IntersectionObserver" in window)) return;
-		const observer = new IntersectionObserver(
-			(entries) => {
-				const entry = entries[0];
-				if (!entry) return;
-				setStickyVisible(entry.boundingClientRect.top < 0);
-			},
-			{ threshold: 0.01 },
-		);
-		observer.observe(form);
-		return () => observer.disconnect();
+		if (!form) return;
+		const update = () => setStickyVisible(form.getBoundingClientRect().top < 0);
+		update();
+		window.addEventListener("scroll", update, { passive: true });
+		window.addEventListener("resize", update);
+		return () => {
+			window.removeEventListener("scroll", update);
+			window.removeEventListener("resize", update);
+		};
 	}, []);
 
 	return (
