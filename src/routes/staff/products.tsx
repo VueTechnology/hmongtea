@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { formatUsd } from "#/domain/money";
 import { loadStaffProduct } from "#/server/fns";
 import { Forbidden } from "#/ui/gate";
 import { noteSearch } from "#/ui/search";
@@ -30,6 +31,34 @@ function Products() {
 		<Page>
 			<Title eyebrow="Staff" title="Products" />
 			<Notes notes={notes} />
+			<p>
+				One-time retail {formatUsd(page.retailCents)}. Subscription{" "}
+				{formatUsd(page.subscriptionCents)} a pack.
+			</p>
+			<form
+				className="grid max-w-sm gap-4 border border-line bg-paper p-4"
+				method="post"
+				action="/staff/products"
+			>
+				<Csrf />
+				<input type="hidden" name="action" value="subscription-interval" />
+				<label className="grid text-sm" htmlFor="interval-weeks">
+					Default subscription interval in weeks
+					<input
+						id="interval-weeks"
+						className={fieldClass}
+						name="intervalWeeks"
+						type="number"
+						min={1}
+						max={52}
+						defaultValue={page.subscriptionIntervalWeeks}
+						required
+					/>
+				</label>
+				<button className={buttonClass} type="submit">
+					Save subscription interval
+				</button>
+			</form>
 			{product ? (
 				<form
 					className="grid max-w-sm gap-4"

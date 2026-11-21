@@ -12,12 +12,14 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as ForgotRouteImport } from './routes/forgot'
+import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as PreOrderRouteImport } from './routes/pre-order'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetRouteImport } from './routes/reset'
+import { Route as StoresRouteImport } from './routes/stores'
 import { Route as TeaRouteImport } from './routes/tea'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AccountIndexRouteImport } from './routes/account/index'
@@ -66,6 +68,11 @@ const ForgotRoute = ForgotRouteImport.update({
   path: '/forgot',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HealthzRoute = HealthzRouteImport.update({
+  id: '/healthz',
+  path: '/healthz',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -94,6 +101,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const ResetRoute = ResetRouteImport.update({
   id: '/reset',
   path: '/reset',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoresRoute = StoresRouteImport.update({
+  id: '/stores',
+  path: '/stores',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeaRoute = TeaRouteImport.update({
@@ -261,12 +273,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
   '/forgot': typeof ForgotRoute
+  '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/partners': typeof PartnersRoute
   '/pre-order': typeof PreOrderRoute
   '/register': typeof RegisterRoute
   '/reset': typeof ResetRoute
+  '/stores': typeof StoresRoute
   '/tea': typeof TeaRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/checkout/done': typeof CheckoutDoneRoute
@@ -304,12 +318,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
   '/forgot': typeof ForgotRoute
+  '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/partners': typeof PartnersRoute
   '/pre-order': typeof PreOrderRoute
   '/register': typeof RegisterRoute
   '/reset': typeof ResetRoute
+  '/stores': typeof StoresRoute
   '/tea': typeof TeaRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/checkout/done': typeof CheckoutDoneRoute
@@ -348,12 +364,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
   '/forgot': typeof ForgotRoute
+  '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/partners': typeof PartnersRoute
   '/pre-order': typeof PreOrderRoute
   '/register': typeof RegisterRoute
   '/reset': typeof ResetRoute
+  '/stores': typeof StoresRoute
   '/tea': typeof TeaRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/checkout/done': typeof CheckoutDoneRoute
@@ -393,12 +411,14 @@ export interface FileRouteTypes {
     | '/'
     | '/cart'
     | '/forgot'
+    | '/healthz'
     | '/login'
     | '/logout'
     | '/partners'
     | '/pre-order'
     | '/register'
     | '/reset'
+    | '/stores'
     | '/tea'
     | '/unsubscribe'
     | '/checkout/done'
@@ -436,12 +456,14 @@ export interface FileRouteTypes {
     | '/'
     | '/cart'
     | '/forgot'
+    | '/healthz'
     | '/login'
     | '/logout'
     | '/partners'
     | '/pre-order'
     | '/register'
     | '/reset'
+    | '/stores'
     | '/tea'
     | '/unsubscribe'
     | '/checkout/done'
@@ -479,12 +501,14 @@ export interface FileRouteTypes {
     | '/'
     | '/cart'
     | '/forgot'
+    | '/healthz'
     | '/login'
     | '/logout'
     | '/partners'
     | '/pre-order'
     | '/register'
     | '/reset'
+    | '/stores'
     | '/tea'
     | '/unsubscribe'
     | '/checkout/done'
@@ -523,12 +547,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CartRoute: typeof CartRoute
   ForgotRoute: typeof ForgotRoute
+  HealthzRoute: typeof HealthzRoute
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   PartnersRoute: typeof PartnersRoute
   PreOrderRoute: typeof PreOrderRoute
   RegisterRoute: typeof RegisterRoute
   ResetRoute: typeof ResetRoute
+  StoresRoute: typeof StoresRoute
   TeaRoute: typeof TeaRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   CheckoutDoneRoute: typeof CheckoutDoneRoute
@@ -586,6 +612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/healthz': {
+      id: '/healthz'
+      path: '/healthz'
+      fullPath: '/healthz'
+      preLoaderRoute: typeof HealthzRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -626,6 +659,13 @@ declare module '@tanstack/react-router' {
       path: '/reset'
       fullPath: '/reset'
       preLoaderRoute: typeof ResetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stores': {
+      id: '/stores'
+      path: '/stores'
+      fullPath: '/stores'
+      preLoaderRoute: typeof StoresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tea': {
@@ -859,12 +899,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CartRoute: CartRoute,
   ForgotRoute: ForgotRoute,
+  HealthzRoute: HealthzRoute,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   PartnersRoute: PartnersRoute,
   PreOrderRoute: PreOrderRoute,
   RegisterRoute: RegisterRoute,
   ResetRoute: ResetRoute,
+  StoresRoute: StoresRoute,
   TeaRoute: TeaRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   CheckoutDoneRoute: CheckoutDoneRoute,

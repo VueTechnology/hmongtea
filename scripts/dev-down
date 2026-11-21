@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Stop the dev stack started by dev-up.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+docker compose -p hmongtea-dev down

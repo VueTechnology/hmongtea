@@ -33,6 +33,8 @@ export const errors: Record<string, string> = {
 	tier: "Choose a pricing tier for a partner.",
 	company: "Enter the company name.",
 	token: "This reset link has expired or was already used.",
+	claim: "This receipt link could not be linked to that account.",
+	interval: "Enter a subscription interval from 1 to 52 weeks.",
 };
 
 export const savedText = "Saved.";

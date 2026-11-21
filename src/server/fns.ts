@@ -4,10 +4,10 @@ import {
 	CART_COOKIE_HTTP,
 	CSRF_COOKIE,
 	CSRF_COOKIE_HTTP,
-	SESSION_COOKIE,
-	SESSION_COOKIE_HTTP,
 	cookieIsSecure,
 	csrfCookieName,
+	SESSION_COOKIE,
+	SESSION_COOKIE_HTTP,
 } from "#/server/cookies";
 
 function firstCookie(
@@ -40,11 +40,7 @@ export const loadShell = createServerFn({ method: "GET" }).handler(async () => {
 	const server = await import("@tanstack/react-start/server");
 	const { buildShell } = await import("#/server/pages");
 	const shell = await buildShell({
-		session: firstCookie(
-			server.getCookie,
-			SESSION_COOKIE,
-			SESSION_COOKIE_HTTP,
-		),
+		session: firstCookie(server.getCookie, SESSION_COOKIE, SESSION_COOKIE_HTTP),
 		cart: firstCookie(server.getCookie, CART_COOKIE, CART_COOKIE_HTTP),
 		csrf: firstCookie(server.getCookie, CSRF_COOKIE, CSRF_COOKIE_HTTP),
 	});
@@ -63,6 +59,8 @@ export const loadShell = createServerFn({ method: "GET" }).handler(async () => {
 	return {
 		csrf: shell.csrf,
 		cartQty: shell.cartQty,
+		cartPlanKind: shell.cartPlanKind,
+		subscriptionIntervalWeeks: shell.subscriptionIntervalWeeks,
 		viewer: shell.viewer,
 		demoMail: shell.demoMail,
 	};
@@ -176,6 +174,15 @@ export const loadStaffWholesale = createServerFn({ method: "GET" })
 		const page = await staffWholesaleList(await sessionCookie(), data);
 		if (page.kind === "forbidden") await markStatus(403);
 		return page;
+	});
+
+export const loadStores = createServerFn({ method: "GET" })
+	.validator((data: unknown) =>
+		typeof data === "string" ? data.slice(0, 12) : "",
+	)
+	.handler(async ({ data }) => {
+		const { publicStores } = await import("#/server/pages");
+		return publicStores(data);
 	});
 
 export const loadStaffWholesaleAccount = createServerFn({ method: "GET" })

@@ -22,14 +22,16 @@ import {
 } from "#/db/schema";
 import { hashPassword } from "#/server/passwords";
 import {
+	daysAgo,
+	isoDate,
+	isProtectedEmail,
+	isSampleEmail,
 	PROTECTED_EMAILS,
 	SAMPLE_BLASTS,
 	SAMPLE_CUSTOMERS,
 	SAMPLE_ORDERS,
 	SAMPLE_PARTNERS,
 	SAMPLE_SIGNUPS,
-	isProtectedEmail,
-	isSampleEmail,
 } from "./seed-sample-plan";
 
 function samplePassword(): string {
@@ -60,7 +62,8 @@ export async function seedSample(databaseUrl: string) {
 			.from(accounts)
 			.where(eq(accounts.email, "staff@hmongtea.com"))
 			.limit(1);
-		if (!staff[0]) throw new Error("staff@hmongtea.com is missing; will not seed");
+		if (!staff[0])
+			throw new Error("staff@hmongtea.com is missing; will not seed");
 		const staffId = staff[0].id;
 
 		const customer = await db
@@ -74,7 +77,9 @@ export async function seedSample(databaseUrl: string) {
 			.where(eq(accounts.email, "partner@hmongtea.com"))
 			.limit(1);
 		if (!customer[0] || !partner[0]) {
-			throw new Error("protected customer or partner login is missing; will not seed");
+			throw new Error(
+				"protected customer or partner login is missing; will not seed",
+			);
 		}
 
 		await removeSample(sql);
@@ -82,35 +87,47 @@ export async function seedSample(databaseUrl: string) {
 		const passwordHash = await hashPassword(samplePassword());
 		const now = new Date();
 
-		const accountRows = [...SAMPLE_CUSTOMERS, ...SAMPLE_PARTNERS].map((person) => {
-			if (isProtectedEmail(person.email) || !isSampleEmail(person.email)) {
-				throw new Error(`refusing to insert protected or unmarked email ${person.email}`);
-			}
-			return {
-				id: person.id,
-				email: person.email,
-				passwordHash,
-				role: "customer" as const,
-				side: person.side,
-				status: person.status,
-				name: person.name,
-				phone: person.phone,
-				legalName: "legalName" in person ? person.legalName : "",
-				dba: "dba" in person ? person.dba : "",
-				businessAddress: "businessAddress" in person ? person.businessAddress : "",
-				businessPhone: "businessPhone" in person ? person.businessPhone : "",
-				contactPerson: "contactPerson" in person ? person.contactPerson : "",
-				website: "website" in person ? person.website : "",
-				resaleCertificate: "resaleCertificate" in person ? person.resaleCertificate : "",
-				taxIdCipher: "",
-				taxIdLast4: "taxIdLast4" in person ? person.taxIdLast4 : "",
-				netTerms: "netTerms" in person ? person.netTerms : false,
-				emailOptOut: "emailOptOut" in person ? person.emailOptOut : false,
-				pricingTier: "pricingTier" in person ? person.pricingTier : null,
-				createdAt: person.createdAt,
-				updatedAt: now,
-			};
-		});
+		const accountRows = [...SAMPLE_CUSTOMERS, ...SAMPLE_PARTNERS].map(
+			(person) => {
+				if (isProtectedEmail(person.email) || !isSampleEmail(person.email)) {
+					throw new Error(
+						`refusing to insert protected or unmarked email ${person.email}`,
+					);
+				}
+				return {
+					id: person.id,
+					email: person.email,
+					passwordHash,
+					role: "customer" as const,
+					side: person.side,
+					status: person.status,
+					name: person.name,
+					phone: person.phone,
+					legalName: "legalName" in person ? person.legalName : "",
+					dba: "dba" in person ? person.dba : "",
+					businessAddress:
+						"businessAddress" in person ? person.businessAddress : "",
+					businessPhone: "businessPhone" in person ? person.businessPhone : "",
+					contactPerson: "contactPerson" in person ? person.contactPerson : "",
+					website: "website" in person ? person.website : "",
+					resaleCertificate:
+						"resaleCertificate" in person ? person.resaleCertificate : "",
+					taxIdCipher: "",
+					taxIdLast4: "taxIdLast4" in person ? person.taxIdLast4 : "",
+					netTerms: "netTerms" in person ? person.netTerms : false,
+					emailOptOut: "emailOptOut" in person ? person.emailOptOut : false,
+					listedStore: "listedStore" in person ? person.listedStore : false,
+					storeCity: "storeCity" in person ? person.storeCity : "",
+					storeState: "storeState" in person ? person.storeState : "",
+					storeZip: "storeZip" in person ? person.storeZip : "",
+					storeDirections:
+						"storeDirections" in person ? person.storeDirections : "",
+					pricingTier: "pricingTier" in person ? person.pricingTier : null,
+					createdAt: person.createdAt,
+					updatedAt: now,
+				};
+			},
+		);
 		await db.insert(accounts).values(accountRows);
 
 		await db.insert(orders).values(
@@ -119,6 +136,10 @@ export async function seedSample(databaseUrl: string) {
 				if (order.useProtected === "customer") accountId = customer[0].id;
 				if (order.useProtected === "partner") accountId = partner[0].id;
 				const shipped = order.status === "shipped";
+				const purchasePlan: "one-time" | "subscription" =
+					order.purchasePlan ?? "one-time";
+				const subscriptionStatus: "active" | null =
+					purchasePlan === "subscription" ? "active" : null;
 				return {
 					id: order.id,
 					accountId,
@@ -136,6 +157,16 @@ export async function seedSample(databaseUrl: string) {
 					qty: order.qty,
 					unitCents: order.unitCents,
 					totalCents: order.qty * order.unitCents,
+					purchasePlan,
+					subscriptionStatus,
+					subscriptionIntervalWeeks:
+						order.purchasePlan === "subscription"
+							? (order.subscriptionIntervalWeeks ?? 4)
+							: null,
+					nextOrderOn:
+						order.purchasePlan === "subscription"
+							? (order.nextOrderOn ?? isoDate(daysAgo(-28)))
+							: null,
 					paymentMode: order.paymentMode,
 					stripeSessionId: order.stripeSessionId ?? null,
 					netTerms: order.netTerms,
@@ -199,8 +230,12 @@ export async function seedSample(databaseUrl: string) {
 		}
 		if (mailRows.length > 0) await db.insert(mailLog).values(mailRows);
 
-		const firstShipped = SAMPLE_ORDERS.find((order) => order.status === "shipped");
-		const firstCancelled = SAMPLE_ORDERS.find((order) => order.status === "cancelled");
+		const firstShipped = SAMPLE_ORDERS.find(
+			(order) => order.status === "shipped",
+		);
+		const firstCancelled = SAMPLE_ORDERS.find(
+			(order) => order.status === "cancelled",
+		);
 		await db.insert(auditLog).values([
 			{
 				id: "c0870000-a017-4000-8000-000000000001",
@@ -241,7 +276,9 @@ export async function seedSample(databaseUrl: string) {
 			},
 		]);
 
-		const signupSuppress = SAMPLE_SIGNUPS.filter((row) => row.status === "unsubscribed");
+		const signupSuppress = SAMPLE_SIGNUPS.filter(
+			(row) => row.status === "unsubscribed",
+		);
 		if (signupSuppress.length > 0) {
 			await db.insert(suppressions).values(
 				signupSuppress.map((row) => ({

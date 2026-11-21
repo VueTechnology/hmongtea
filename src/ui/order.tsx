@@ -16,6 +16,10 @@ export type OrderCard = {
 	qty: number;
 	unitCents: number;
 	totalCents: number;
+	purchasePlan: "one-time" | "subscription";
+	subscriptionStatus: "active" | "cancelled" | null;
+	subscriptionIntervalWeeks: number | null;
+	nextOrderOn: string | null;
 	paymentMode: string;
 	netTerms: boolean;
 	shipDate: string | null;
@@ -46,6 +50,20 @@ export function OrderFacts({ order }: { order: OrderCard }) {
 					{order.side === "wholesale" ? "Wholesale" : "Retail"}
 				</dd>
 			</div>
+			<div>
+				<dt className="text-sm text-muted">Plan</dt>
+				<dd className="m-0">
+					{order.purchasePlan === "subscription"
+						? `Subscription, every ${order.subscriptionIntervalWeeks} weeks, ${order.subscriptionStatus}`
+						: "One-time purchase"}
+				</dd>
+			</div>
+			{order.nextOrderOn ? (
+				<div>
+					<dt className="text-sm text-muted">Next order date</dt>
+					<dd className="m-0">{order.nextOrderOn}</dd>
+				</div>
+			) : null}
 			<div>
 				<dt className="text-sm text-muted">Packs</dt>
 				<dd className="m-0">{order.qty}</dd>

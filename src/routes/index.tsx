@@ -1,94 +1,50 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { formatUsd } from "#/domain/money";
-import {
-	NET_WEIGHT_LABEL,
-	SHIP_WINDOW,
-	SUBSCRIPTION_CENTS,
-} from "#/domain/prices";
-import { loadHome } from "#/server/fns";
+import { createFileRoute } from "@tanstack/react-router";
 import { noteSearch } from "#/ui/search";
+import { Notes } from "#/ui/site";
 import {
-	buttonClass,
-	Csrf,
-	Field,
-	Notes,
-	Page,
-	quietButtonClass,
-	Title,
-} from "#/ui/site";
+	BenefitPillars,
+	BrewGuide,
+	ClosingBuy,
+	Comparison,
+	Faq,
+	HomeHero,
+	LocalStoresSection,
+	OriginHeritage,
+	ReviewSlots,
+	SubscriptionPitch,
+	UnfurlProof,
+} from "#/ui/storefront";
 
 export const Route = createFileRoute("/")({
-	head: () => ({ meta: [{ title: "hmongtea.com" }] }),
+	head: () => ({
+		meta: [
+			{ title: "KuabCha whole-leaf green tea | HmongTea" },
+			{
+				name: "description",
+				content:
+					"Whole-leaf green tea from the hills of Chiang Rai. One ingredient, the top three young leaves. Buy one pack or subscribe and save $5.00.",
+			},
+		],
+	}),
 	validateSearch: noteSearch,
-	loader: () => loadHome(),
 	component: Home,
 });
 
 function Home() {
-	const home = Route.useLoaderData();
-	const notes = Route.useSearch();
 	return (
-		<Page>
-			<Title eyebrow="hmongtea.com" title="KuabCha" />
-			<Notes notes={notes} />
-			<div className="grid items-start gap-8 md:grid-cols-2">
-				<div className="grid gap-4">
-					<p className="m-0 max-w-xl font-serif text-2xl italic leading-snug">
-						Loose-leaf green tea from the Golden Triangle foothills in Chiang
-						Rai, Thailand.
-					</p>
-					<p className="m-0">
-						The pick is the top 3 leaves. Caffeine is low. Net weight{" "}
-						{NET_WEIGHT_LABEL}. Ships in {SHIP_WINDOW}.
-					</p>
-					<p className="m-0">
-						One pack is {formatUsd(home.retailCents)}. A subscription pack is{" "}
-						{formatUsd(SUBSCRIPTION_CENTS)}.
-					</p>
-					<div className="flex flex-wrap gap-3">
-						<Link to="/tea" className={buttonClass}>
-							Order
-						</Link>
-						<Link to="/partners" className={quietButtonClass}>
-							Partners
-						</Link>
-					</div>
-				</div>
-				<figure className="stage m-0">
-					<picture>
-						<source srcSet="/products/pack-box.webp" type="image/webp" />
-						<img
-							src="/products/pack-box.png"
-							alt="KuabCha tea box, front and side"
-							width={1152}
-							height={1775}
-						/>
-					</picture>
-				</figure>
-			</div>
-			<section className="mt-12 max-w-xl" aria-labelledby="updates-heading">
-				<h2 id="updates-heading" className="font-serif text-3xl font-medium">
-					Updates
-				</h2>
-				<p>
-					Leave an email for updates. A name is optional. The request stays
-					pending until you open the confirmation link.
-				</p>
-				<form className="grid gap-4" method="post" action="/updates">
-					<Csrf />
-					<Field
-						label="Email"
-						name="email"
-						type="email"
-						required
-						autoComplete="email"
-					/>
-					<Field label="Name" name="name" autoComplete="name" />
-					<button className={buttonClass} type="submit">
-						Request updates
-					</button>
-				</form>
-			</section>
-		</Page>
+		<main id="main" className="storefront-main">
+			<HomeHero />
+			<Notes notes={Route.useSearch()} />
+			<UnfurlProof />
+			<BenefitPillars />
+			<OriginHeritage />
+			<Comparison />
+			<BrewGuide />
+			<SubscriptionPitch />
+			<LocalStoresSection />
+			<ReviewSlots />
+			<Faq />
+			<ClosingBuy id="home" />
+		</main>
 	);
 }

@@ -1,3 +1,8 @@
+import {
+	type RetailCart,
+	serializeRetailCartCookie,
+} from "#/domain/purchase-plan";
+
 export const SESSION_COOKIE = "__Host-hmongtea_session";
 export const CSRF_COOKIE = "__Host-hmongtea_csrf";
 export const CART_COOKIE = "__Host-hmongtea_cart";
@@ -74,9 +79,14 @@ export function csrfCookie(token: string, request?: Request | null): string {
 	return cookie(csrfCookieName(secure), token, TWO_WEEKS, secure);
 }
 
-export function cartCookie(qty: number, request?: Request | null): string {
+export function cartCookie(cart: RetailCart, request?: Request | null): string {
 	const secure = cookieIsSecure(request);
-	return cookie(cartCookieName(secure), String(qty), TWO_WEEKS, secure);
+	return cookie(
+		cartCookieName(secure),
+		serializeRetailCartCookie(cart),
+		TWO_WEEKS,
+		secure,
+	);
 }
 
 export function clearCartCookie(request?: Request | null): string {

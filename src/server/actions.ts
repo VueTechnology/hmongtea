@@ -1,10 +1,17 @@
 import { getDb } from "#/db/client";
-import { parseCartQty } from "#/domain/cart";
+import { quoteCart } from "#/domain/cart";
 import { parseEin } from "#/domain/ein";
 import { readPaymentGate } from "#/domain/payment-gate";
 import { portalHome, portalOf } from "#/domain/portal";
 import { parsePartnerTier } from "#/domain/prices";
-import { newToken, tokenEquals } from "#/domain/secret";
+import {
+	makePurchasePlan,
+	parseIntervalWeeks,
+	parsePlanKind,
+	parseRetailCartCookie,
+	type SubscriptionAction,
+} from "#/domain/purchase-plan";
+import { newToken, sha256, tokenEquals } from "#/domain/secret";
 import { paidOrderId, readStripeEvent } from "#/domain/stripe-event";
 import {
 	parseAddress,
@@ -42,6 +49,7 @@ import {
 import {
 	audit,
 	cancelOrder,
+	claimGuestOrder,
 	clearCart,
 	createAccount,
 	deleteCancelledOrder,
@@ -56,8 +64,9 @@ import {
 	openSession,
 	ordersToCsv,
 	quoteForAccount,
-	readCartQty,
+	readCart,
 	readOrderFor,
+	readSubscriptionInterval,
 	requestSignup,
 	StockShort,
 	searchOrders,
@@ -66,11 +75,14 @@ import {
 	setCart,
 	setNetTerms,
 	setStock,
+	setStoreListing,
+	setSubscriptionInterval,
 	shipOrder,
 	updateAccountContact,
 	updateCampaign,
 	updateOrderDetails,
 	updateSignup,
+	updateSubscription,
 	type Viewer,
 } from "#/server/store";
 
@@ -148,10 +160,7 @@ function pathOf(request: Request): string {
 }
 
 async function viewerOf(request: Request): Promise<Viewer | null> {
-	return findViewer(
-		getDb(),
-		readSessionToken(request.headers.get("cookie")),
-	);
+	return findViewer(getDb(), readSessionToken(request.headers.get("cookie")));
 }
 
 function csrfOk(
@@ -175,6 +184,25 @@ function sessionCookies(
 		csrfCookie(session.csrf, request),
 		...extra,
 	];
+}
+
+async function claimQuery(
+	fields: Record<string, string>,
+	account: { id: string; email: string },
+): Promise<string> {
+	const orderId = fields.order ?? "";
+	const token = fields.claim ?? "";
+	if (!orderId && !token) return "";
+	if (!/^[0-9a-f-]{36}$/i.test(orderId) || token.length < 20) {
+		return "error=claim";
+	}
+	const claimed = await claimGuestOrder(getDb(), {
+		orderId,
+		token,
+		accountId: account.id,
+		email: account.email,
+	});
+	return claimed ? "claimed=1" : "error=claim";
 }
 
 type Door = "retail" | "wholesale" | "staff" | "any";
@@ -229,16 +257,21 @@ async function login(
 	const session = await openSession(getDb(), account.id);
 	const extra: string[] = [];
 	if (portal === "customer") {
-		const qty = parseCartQty(
+		const cart = parseRetailCartCookie(
 			readCartCookie(request.headers.get("cookie")),
 		);
-		if (qty > 0) await setCart(getDb(), account.id, "retail", qty);
+		if (cart.qty > 0) await setCart(getDb(), account.id, "retail", cart);
 		extra.push(clearCartCookie(request));
 	}
 	if (account.role === "staff")
 		await audit(getDb(), account.id, "staff.login", "session", account.id);
-	const dest = door === "any" ? portalHome(portal) : doorPathHome(door);
-	return redirect(dest, sessionCookies(request, session, extra));
+	const home = door === "any" ? portalHome(portal) : doorPathHome(door);
+	const claimed =
+		portal === "customer" ? await claimQuery(fields, account) : "";
+	return redirect(
+		claimed ? `${home}?${claimed}` : home,
+		sessionCookies(request, session, extra),
+	);
 }
 
 function doorPathHome(door: Door): string {
@@ -277,7 +310,11 @@ async function registerRetail(
 	});
 	if (!created.ok) return redirect("/register?error=taken");
 	const session = await openSession(getDb(), created.id);
-	return redirect("/account", sessionCookies(request, session));
+	const claimed = await claimQuery(fields, { id: created.id, email });
+	return redirect(
+		claimed ? `/account?${claimed}` : "/account",
+		sessionCookies(request, session),
+	);
 }
 
 async function registerWholesale(
@@ -345,16 +382,18 @@ async function saveCart(
 	viewer: Viewer | null,
 ): Promise<Response> {
 	const qty = parseQty(fields.qty);
-	if (qty == null) return redirect("/cart?error=qty");
+	const planKind = fields.plan ? parsePlanKind(fields.plan) : "one-time";
+	if (qty == null || !planKind) return redirect("/cart?error=qty");
+	const cart = { qty, planKind };
 	if (viewer?.role === "staff") return redirect("/staff");
 	if (viewer?.side === "wholesale")
 		return redirect("/wholesale/order?error=retail");
 	if (viewer) {
-		await setCart(getDb(), viewer.id, "retail", qty);
+		await setCart(getDb(), viewer.id, "retail", cart);
 		return redirect("/cart");
 	}
 	return redirect("/cart", [
-		cartCookie(qty, request),
+		cartCookie(cart, request),
 		csrfCookie(
 			readCsrfToken(request.headers.get("cookie")) ?? newToken(),
 			request,
@@ -363,23 +402,37 @@ async function saveCart(
 }
 
 async function checkout(
+	request: Request,
 	fields: Record<string, string>,
 	viewer: Viewer | null,
 	env: AppEnv,
 ): Promise<Response> {
-	if (!viewer) return redirect("/login");
-	if (viewer.role !== "customer" || viewer.side !== "retail")
+	if (viewer && (viewer.role !== "customer" || viewer.side !== "retail"))
 		return forbidden();
-	const account = await findAccountById(getDb(), viewer.id);
-	if (!account) return redirect("/login");
-	const qty = await readCartQty(getDb(), viewer.id);
+	const account = viewer ? await findAccountById(getDb(), viewer.id) : null;
+	if (viewer && !account) return redirect("/login");
+	const cart = account
+		? await readCart(getDb(), account.id)
+		: parseRetailCartCookie(readCartCookie(request.headers.get("cookie")));
+	const qty = cart.qty;
+	const intervalWeeks = await readSubscriptionInterval(getDb());
+	const email = account?.email ?? parseEmail(fields.email);
 	const name = parseName(fields.contactName, true);
 	const phone = parsePhone(fields.phone, false);
 	const address = parseAddress(fields);
+	if (!email) return redirect("/checkout?error=email");
 	if (!name) return redirect("/checkout?error=name");
 	if (phone == null) return redirect("/checkout?error=phone");
 	if (!address) return redirect("/checkout?error=address");
-	const quote = quoteForAccount(account, "retail", qty);
+	const quote = account
+		? quoteForAccount(account, "retail", qty, cart.planKind, intervalWeeks)
+		: quoteCart({
+				accountSide: "retail",
+				accountStatus: "active",
+				orderSide: "retail",
+				purchasePlan: makePurchasePlan(cart.planKind, intervalWeeks),
+				qty,
+			});
 	if (!quote.ok) return redirect("/checkout?error=empty");
 	const gate = readPaymentGate({
 		STRIPE_SECRET_KEY: env.stripeSecret,
@@ -388,6 +441,7 @@ async function checkout(
 	});
 	if (gate.kind === "refused") return redirect("/checkout?error=payment");
 	const payment = gate.kind === "demo" ? "demo" : "stripe";
+	const claim = account ? "" : newToken();
 	let orderId: string;
 	try {
 		orderId = await insertOrder(
@@ -397,9 +451,11 @@ async function checkout(
 				orderSide: "retail",
 				qty,
 				contactName: name,
+				contactEmail: email,
 				phone,
 				address,
 				payment,
+				guestClaimHash: claim ? sha256(claim) : null,
 			},
 			quote.quote,
 		);
@@ -407,10 +463,13 @@ async function checkout(
 		if (error instanceof StockShort) return redirect("/checkout?error=stock");
 		throw error;
 	}
-	await clearCart(getDb(), viewer.id);
-	if (payment === "stripe")
-		return redirect(`/checkout/done?order=${orderId}&payment=stripe`);
-	return redirect(`/checkout/done?order=${orderId}`);
+	const cookies: string[] = [];
+	if (account) await clearCart(getDb(), account.id);
+	else cookies.push(clearCartCookie(request));
+	const done = new URLSearchParams({ order: orderId });
+	if (payment === "stripe") done.set("payment", "stripe");
+	if (claim) done.set("claim", claim);
+	return redirect(`/checkout/done?${done}`, cookies);
 }
 
 async function placeWholesale(
@@ -458,6 +517,7 @@ async function placeWholesale(
 				orderSide: "wholesale",
 				qty,
 				contactName: name,
+				contactEmail: account.email,
 				phone,
 				address,
 				payment,
@@ -506,9 +566,44 @@ async function customerOrderPost(
 		viewer.side === "wholesale"
 			? `/wholesale/orders/${id}`
 			: `/account/orders/${id}`;
+	if (
+		fields.action === "skip" ||
+		fields.action === "change-interval" ||
+		fields.action === "cancel-subscription"
+	) {
+		if (viewer.side !== "retail") return forbidden();
+		const action: SubscriptionAction =
+			fields.action === "skip"
+				? { kind: "skip" }
+				: fields.action === "change-interval"
+					? {
+							kind: "change-interval",
+							intervalWeeks: parseIntervalWeeks(fields.intervalWeeks) ?? 0,
+						}
+					: { kind: "cancel" };
+		const result = await updateSubscription(getDb(), {
+			orderId: id,
+			accountId: viewer.id,
+			action,
+		});
+		if (result === "forbidden") return forbidden();
+		if (result === "interval") return redirect(`${back}?error=interval`);
+		if (result === "closed" || result === "missing")
+			return redirect(`${back}?error=closed`);
+		return redirect(
+			`${back}?${fields.action === "cancel-subscription" ? "cancelled=1" : "saved=1"}`,
+		);
+	}
 	if (fields.action === "reorder") {
 		if (viewer.side === "retail" && access.side === "retail") {
-			await setCart(getDb(), viewer.id, "retail", access.qty);
+			await setCart(getDb(), viewer.id, "retail", {
+				qty: access.qty,
+				planKind:
+					access.purchasePlan === "subscription" &&
+					access.subscriptionStatus === "active"
+						? "subscription"
+						: "one-time",
+			});
 			return redirect("/cart");
 		}
 		if (viewer.side === "wholesale" && access.side === "wholesale") {
@@ -576,8 +671,10 @@ async function staffOrderPost(
 	const qty = parseQty(fields.qty);
 	if (!name || phone == null || !address || qty == null || qty < 1)
 		return redirect(`${back}?error=address`);
-	const account = await findAccountById(getDb(), current.accountId);
-	if (!account) return redirect(`${back}?error=address`);
+	const account = current.accountId
+		? await findAccountById(getDb(), current.accountId)
+		: null;
+	if (current.accountId && !account) return redirect(`${back}?error=address`);
 	const result = await updateOrderDetails(getDb(), id, {
 		contactName: name,
 		contactPhone: phone,
@@ -645,6 +742,35 @@ async function staffWholesalePost(
 		"account",
 		id,
 		fields.netTerms === "1" ? "on" : "off",
+	);
+	return redirect(`${back}?saved=1`);
+}
+
+async function staffWholesaleStorePost(
+	id: string,
+	fields: Record<string, string>,
+	viewer: Viewer,
+): Promise<Response> {
+	const back = `/staff/wholesale/${id}`;
+	const parse = (key: string, max: number) => {
+		const value = typeof fields[key] === "string" ? fields[key].trim() : "";
+		return value.slice(0, max);
+	};
+	const ok = await setStoreListing(getDb(), id, {
+		listed: fields.listed === "1",
+		city: parse("storeCity", 80),
+		state: parse("storeState", 40),
+		zip: parse("storeZip", 12),
+		directions: parse("storeDirections", 500),
+	});
+	if (!ok) return redirect(`${back}?error=pending`);
+	await audit(
+		getDb(),
+		viewer.id,
+		"wholesale.store_listing",
+		"account",
+		id,
+		fields.listed === "1" ? "listed" : "unlisted",
 	);
 	return redirect(`${back}?saved=1`);
 }
@@ -864,7 +990,7 @@ export async function handlePost(request: Request): Promise<Response> {
 		return redirect("/?joined=1");
 	}
 	if (path === "/cart") return saveCart(request, fields, viewer);
-	if (path === "/checkout") return checkout(fields, viewer, env);
+	if (path === "/checkout") return checkout(request, fields, viewer, env);
 	if (path === "/wholesale/order") return placeWholesale(fields, viewer, env);
 	if (path === "/account" || path === "/wholesale/desk")
 		return saveContact(fields, viewer);
@@ -877,8 +1003,11 @@ export async function handlePost(request: Request): Promise<Response> {
 	const staffOrder = path.match(/^\/staff\/orders\/([0-9a-f-]{36})$/i);
 	if (staffOrder?.[1]) return staffOrderPost(staffOrder[1], fields, viewer);
 	const staffWholesale = path.match(/^\/staff\/wholesale\/([0-9a-f-]{36})$/i);
-	if (staffWholesale?.[1])
+	if (staffWholesale?.[1]) {
+		if (fields.action === "store")
+			return staffWholesaleStorePost(staffWholesale[1], fields, viewer);
 		return staffWholesalePost(staffWholesale[1], fields, viewer);
+	}
 	if (path === "/staff/accounts") return staffCreatePost(fields, viewer, env);
 	if (path === "/staff/orders/new") return staffBehalfPost(fields, viewer);
 	if (path === "/staff/password-reset")
@@ -894,6 +1023,21 @@ async function staffProductPost(
 	fields: Record<string, string>,
 	viewer: Viewer,
 ): Promise<Response> {
+	if (fields.action === "subscription-interval") {
+		const intervalWeeks = parseIntervalWeeks(fields.intervalWeeks);
+		if (!intervalWeeks) return redirect("/staff/products?error=interval");
+		const saved = await setSubscriptionInterval(getDb(), intervalWeeks);
+		if (!saved) return redirect("/staff/products?error=interval");
+		await audit(
+			getDb(),
+			viewer.id,
+			"product.subscription_interval",
+			"product",
+			"KUABCHA-PACK",
+			String(intervalWeeks),
+		);
+		return redirect("/staff/products?saved=1");
+	}
 	const onHand = Number(fields.onHand);
 	if (!Number.isInteger(onHand)) return redirect("/staff/products?error=stock");
 	const saved = await setStock(getDb(), onHand);

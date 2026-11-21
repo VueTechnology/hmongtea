@@ -8,6 +8,7 @@ import {
 	buttonClass,
 	Csrf,
 	Field,
+	fieldClass,
 	Notes,
 	Page,
 	quietButtonClass,
@@ -42,6 +43,78 @@ function OrderPage() {
 			<Title eyebrow="Account" title="Order" />
 			<Notes notes={notes} />
 			<OrderFacts order={order} />
+			{order.purchasePlan === "subscription" ? (
+				<section
+					className="mt-8 grid max-w-lg gap-4 border border-line bg-paper p-4"
+					aria-labelledby="subscription-heading"
+				>
+					<h2
+						id="subscription-heading"
+						className="m-0 font-serif text-3xl font-medium"
+					>
+						Subscription
+					</h2>
+					<p className="m-0">
+						{order.subscriptionStatus === "active" ? "Active" : "Cancelled"}.
+						{order.subscriptionIntervalWeeks
+							? ` Every ${order.subscriptionIntervalWeeks} weeks.`
+							: ""}
+					</p>
+					{order.nextOrderOn ? (
+						<p className="m-0">Next order date {order.nextOrderOn}.</p>
+					) : null}
+					{order.subscriptionStatus === "active" ? (
+						<div className="grid gap-4">
+							<form method="post">
+								<Csrf />
+								<button
+									className={quietButtonClass}
+									name="action"
+									value="skip"
+									type="submit"
+								>
+									Skip the next order
+								</button>
+							</form>
+							<form className="grid gap-4" method="post">
+								<Csrf />
+								<label className="grid text-sm" htmlFor="subscription-interval">
+									Delivery interval in weeks
+									<input
+										id="subscription-interval"
+										className={fieldClass}
+										name="intervalWeeks"
+										type="number"
+										min={1}
+										max={52}
+										defaultValue={order.subscriptionIntervalWeeks ?? 4}
+										required
+									/>
+								</label>
+								<button
+									className={buttonClass}
+									name="action"
+									value="change-interval"
+									type="submit"
+								>
+									Change interval
+								</button>
+							</form>
+							<form method="post">
+								<Csrf />
+								<button
+									className={quietButtonClass}
+									name="action"
+									value="cancel-subscription"
+									type="submit"
+								>
+									Cancel subscription
+								</button>
+							</form>
+						</div>
+					) : null}
+				</section>
+			) : null}
 			{open ? (
 				<div className="mt-8 grid max-w-lg gap-8">
 					<form className="grid gap-4" method="post">

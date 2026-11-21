@@ -15,12 +15,19 @@ async function POST({ request }: { request: Request }) {
 }
 
 function Login() {
+	const notes = Route.useSearch();
 	return (
 		<Page>
 			<Title eyebrow="hmongtea.com" title="Log in" />
-			<Notes notes={Route.useSearch()} />
+			<Notes notes={notes} />
 			<form className="grid max-w-md gap-4" method="post" action="/login">
 				<Csrf />
+				{notes.order ? (
+					<input type="hidden" name="order" value={notes.order} />
+				) : null}
+				{notes.claim ? (
+					<input type="hidden" name="claim" value={notes.claim} />
+				) : null}
 				<Field
 					label="Email"
 					name="email"

@@ -5,6 +5,7 @@ import { noteSearch } from "#/ui/search";
 import {
 	buttonClass,
 	Csrf,
+	fieldClass,
 	Notes,
 	Page,
 	quietButtonClass,
@@ -129,6 +130,70 @@ function WholesaleAccount() {
 					</p>
 					<button className={buttonClass} type="submit">
 						Save flag
+					</button>
+				</form>
+			) : null}
+			{account.status === "active" ? (
+				<form
+					className="mt-6 grid max-w-md gap-3 border border-line bg-paper p-4"
+					method="post"
+				>
+					<Csrf />
+					<input type="hidden" name="action" value="store" />
+					<h2 className="m-0 font-serif text-xl">Store listing</h2>
+					<p className="m-0 text-sm text-muted">
+						List this store on the public store page. Only the fields below are
+						shown to buyers.
+					</p>
+					<label className="flex min-h-11 items-center gap-3 text-sm">
+						<input
+							type="checkbox"
+							name="listed"
+							value="1"
+							defaultChecked={account.listedStore}
+						/>
+						Listed on the store page
+					</label>
+					<label className="grid text-sm" htmlFor="storeCity">
+						City
+						<input
+							id="storeCity"
+							name="storeCity"
+							className={fieldClass}
+							defaultValue={account.storeCity}
+						/>
+					</label>
+					<label className="grid text-sm" htmlFor="storeState">
+						State
+						<input
+							id="storeState"
+							name="storeState"
+							className={fieldClass}
+							defaultValue={account.storeState}
+						/>
+					</label>
+					<label className="grid text-sm" htmlFor="storeZip">
+						ZIP
+						<input
+							id="storeZip"
+							name="storeZip"
+							className={fieldClass}
+							defaultValue={account.storeZip}
+						/>
+					</label>
+					<label className="grid text-sm" htmlFor="storeDirections">
+						Directions link
+						<input
+							id="storeDirections"
+							name="storeDirections"
+							type="url"
+							className={fieldClass}
+							defaultValue={account.storeDirections}
+							placeholder="https://maps.example.com/…"
+						/>
+					</label>
+					<button className={buttonClass} type="submit">
+						Save store listing
 					</button>
 				</form>
 			) : null}

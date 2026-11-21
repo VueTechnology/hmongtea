@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { formatUsd } from "#/domain/money";
-import { RETAIL_CENTS } from "#/domain/prices";
+import { planUnitCents } from "#/domain/prices";
 import { loadCheckout } from "#/server/fns";
 import { noteSearch } from "#/ui/search";
 import {
@@ -33,7 +33,9 @@ function Checkout() {
 	const shell = useShell();
 	const viewer = shell.viewer;
 	const qty = shell.cartQty;
-	const retail = viewer?.role === "customer" && viewer.side === "retail";
+	const unitCents = planUnitCents(shell.cartPlanKind);
+	const retail =
+		!viewer || (viewer.role === "customer" && viewer.side === "retail");
 	return (
 		<Page>
 			<Title eyebrow="Retail" title="Checkout" />
@@ -47,12 +49,7 @@ function Checkout() {
 					test pair.
 				</p>
 			) : null}
-			{!viewer ? (
-				<p>
-					<Link to="/login">Log in</Link> or{" "}
-					<Link to="/register">register</Link> before checkout.
-				</p>
-			) : null}
+			{!viewer ? <p>Checkout as a guest. No account is required.</p> : null}
 			{viewer && !retail ? (
 				<p>Partner accounts order from the partner desk.</p>
 			) : null}
@@ -65,21 +62,36 @@ function Checkout() {
 				<form className="grid max-w-lg gap-4" method="post" action="/checkout">
 					<Csrf />
 					<p className="m-0">
-						{qty} packs at {formatUsd(RETAIL_CENTS)}. Total{" "}
-						<span data-testid="order-total">
-							{formatUsd(qty * RETAIL_CENTS)}
+						{shell.cartPlanKind === "subscription"
+							? `Subscription, every ${shell.subscriptionIntervalWeeks} weeks. `
+							: "One-time purchase. "}
+						{qty} {qty === 1 ? "pack" : "packs"} at {formatUsd(unitCents)}.
+						Total{" "}
+						<span data-ht="order-total" data-testid="order-total">
+							{formatUsd(qty * unitCents)}
 						</span>
 						.
 					</p>
+					{viewer ? (
+						<p className="m-0">Order email {viewer.email}.</p>
+					) : (
+						<Field
+							label="Email"
+							name="email"
+							type="email"
+							required
+							autoComplete="email"
+						/>
+					)}
 					<Field
 						label="Contact name"
 						name="contactName"
 						required
-						defaultValue={viewer.name}
+						defaultValue={viewer?.name ?? ""}
 						autoComplete="name"
 					/>
 					<AddressFields />
-					<button className={buttonClass} type="submit">
+					<button data-ht="place-order" className={buttonClass} type="submit">
 						Place order
 					</button>
 				</form>

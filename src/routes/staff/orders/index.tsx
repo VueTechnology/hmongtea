@@ -86,12 +86,13 @@ function StaffOrders() {
 					Export CSV
 				</a>
 			</form>
-			<div className="mt-6 overflow-x-auto">
+			<div className="data-table mt-6">
 				<table className="w-full border-collapse text-left text-sm">
 					<thead>
 						<tr className="border-b border-line">
 							<th className="py-2 pr-3 font-medium">Date</th>
 							<th className="py-2 pr-3 font-medium">Side</th>
+							<th className="py-2 pr-3 font-medium">Plan</th>
 							<th className="py-2 pr-3 font-medium">Status</th>
 							<th className="py-2 pr-3 font-medium">Email</th>
 							<th className="py-2 pr-3 font-medium">Total</th>
@@ -100,7 +101,7 @@ function StaffOrders() {
 					<tbody>
 						{page.orders.map((order) => (
 							<tr key={order.id} className="border-b border-line">
-								<td className="py-2 pr-3">
+								<td className="py-2 pr-3" data-label="Date">
 									<Link
 										to="/staff/orders/$orderId"
 										params={{ orderId: order.id }}
@@ -108,14 +109,21 @@ function StaffOrders() {
 										{order.createdAt.slice(0, 10)}
 									</Link>
 								</td>
-								<td className="py-2 pr-3">
+								<td className="py-2 pr-3" data-label="Side">
 									{order.side === "wholesale" ? "Partner" : "Retail"}
 								</td>
-								<td className="py-2 pr-3">
+								<td className="py-2 pr-3" data-label="Plan">
+									{order.purchasePlan === "subscription"
+										? `Subscription, ${order.subscriptionIntervalWeeks} weeks`
+										: "One-time"}
+								</td>
+								<td className="py-2 pr-3" data-label="Status">
 									<Status value={order.status} />
 								</td>
-								<td className="py-2 pr-3">{order.contactEmail}</td>
-								<td className="py-2 pr-3">
+								<td className="py-2 pr-3" data-label="Email">
+									{order.contactEmail}
+								</td>
+								<td className="py-2 pr-3" data-label="Total">
 									<Money cents={order.totalCents} />
 								</td>
 							</tr>

@@ -110,6 +110,7 @@ export async function placeDeskOrder(
 				orderSide: account.side,
 				qty: input.qty,
 				contactName: input.contactName,
+				contactEmail: account.email,
 				phone: input.phone,
 				address: input.address,
 				payment: "demo",

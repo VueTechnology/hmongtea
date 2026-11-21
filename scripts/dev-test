@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Start the dev stack, run the test suite against it, and tear the stack
+# down on the way out.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+cleanup() {
+	bun run dev-down
+}
+trap cleanup EXIT
+
+bun run dev-up
+docker compose -p hmongtea-dev exec -T app bun test
