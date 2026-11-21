@@ -1,0 +1,61 @@
+name: hmongtea-crm
+
+services:
+  db:
+    image: postgres:18.7
+    environment:
+      POSTGRES_USER: hmongtea
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: hmongtea
+    volumes:
+      - hmongtea-pg:/var/lib/postgresql
+    shm_size: 256mb
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hmongtea -d hmongtea"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://hmongtea:${POSTGRES_PASSWORD}@db:5432/hmongtea
+      PORT: "3299"
+      HOST: 0.0.0.0
+      APP_ORIGIN: ${APP_ORIGIN:?set APP_ORIGIN}
+      STAFF_EMAIL: ${STAFF_EMAIL:?set STAFF_EMAIL}
+      STAFF_PASSWORD: ${STAFF_PASSWORD:?set STAFF_PASSWORD}
+      CUSTOMER_EMAIL: ${CUSTOMER_EMAIL:-}
+      CUSTOMER_PASSWORD: ${CUSTOMER_PASSWORD:-}
+      PARTNER_EMAIL: ${PARTNER_EMAIL:-}
+      PARTNER_PASSWORD: ${PARTNER_PASSWORD:-}
+      TAX_ID_KEY: ${TAX_ID_KEY:?set TAX_ID_KEY}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      NODE_ENV: production
+      COOKIE_SECURE: ${COOKIE_SECURE:-}
+    ports:
+      - "${APP_PORT:-8080}:3299"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "fetch('http://localhost:3299/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  hmongtea-pg:

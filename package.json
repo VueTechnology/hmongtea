@@ -15,7 +15,9 @@
     "test": "bun test",
     "prove": "bun scripts/prove.ts",
     "check": "bun scripts/build-tokens.ts --check && biome check src scripts",
-    "seed:sample": "bun scripts/seed-sample.ts"
+    "seed:sample": "bun scripts/seed-sample.ts",
+    "prod-build": "docker compose -f compose.prod.yaml build",
+    "prod-deploy": "docker compose -f compose.prod.yaml up -d"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "5.3.0",

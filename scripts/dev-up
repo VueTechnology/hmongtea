@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Start the dev stack (db, app, mailpit) on the fixed project name.
+# The review arena overrides ports from outside the repo; this script
+# starts the default compose stack for local work.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+docker compose -p hmongtea-dev up -d --build
+echo "dev stack is up; run 'bun run seed:sample' inside the app to load sample data."
