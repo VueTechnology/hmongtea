@@ -9,7 +9,13 @@ import {
 import type { PlanKind } from "#/domain/purchase-plan";
 import { buttonClass, Csrf, fieldClass, useShell } from "#/ui/site";
 
-export function BuyBox({ id }: { id: string }) {
+export function BuyBox({
+	id,
+	sticky = true,
+}: {
+	id: string;
+	sticky?: boolean;
+}) {
 	const shell = useShell();
 	const [plan, setPlan] = useState<PlanKind>(
 		shell.cartQty > 0 ? shell.cartPlanKind : "subscription",
@@ -22,7 +28,7 @@ export function BuyBox({ id }: { id: string }) {
 
 	useEffect(() => {
 		const form = formRef.current;
-		if (!form) return;
+		if (!form || !sticky) return;
 		const initialTop = form.getBoundingClientRect().top + window.scrollY;
 		const update = () => {
 			const header = Number.parseFloat(
@@ -39,7 +45,7 @@ export function BuyBox({ id }: { id: string }) {
 			window.removeEventListener("scroll", update);
 			window.removeEventListener("resize", update);
 		};
-	}, []);
+	}, [sticky]);
 
 	return (
 		<>
@@ -134,7 +140,7 @@ export function BuyBox({ id }: { id: string }) {
 					charged.
 				</p>
 			</form>
-			{stickyVisible ? (
+			{sticky && stickyVisible ? (
 				<div className="sticky-buy" data-ht="sticky-buy">
 					<div className="sticky-buy__text" aria-live="polite">
 						<strong>{formatUsd(selectedTotal)}</strong>
@@ -152,7 +158,7 @@ export function BuyBox({ id }: { id: string }) {
 					</button>
 				</div>
 			) : null}
-			<div className="sticky-buy-spacer" aria-hidden="true" />
+			{sticky ? <div className="sticky-buy-spacer" aria-hidden="true" /> : null}
 		</>
 	);
 }

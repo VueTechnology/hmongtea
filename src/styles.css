@@ -256,8 +256,7 @@ footer {
 	background: transparent;
 }
 
-.gallery .frame img,
-.gallery .frame picture {
+.gallery .frame img {
 	display: none;
 	width: 100%;
 }
@@ -286,15 +285,10 @@ footer {
 }
 
 .gallery:not(:has(input:checked)) img.shot-box,
-.gallery:not(:has(input:checked)) picture:has(img.shot-box),
 .gallery:has(#shot-box:checked) img.shot-box,
-.gallery:has(#shot-box:checked) picture:has(img.shot-box),
 .gallery:has(#shot-front:checked) img.shot-front,
-.gallery:has(#shot-front:checked) picture:has(img.shot-front),
 .gallery:has(#shot-back:checked) img.shot-back,
-.gallery:has(#shot-back:checked) picture:has(img.shot-back),
-.gallery:has(#shot-side:checked) img.shot-side,
-.gallery:has(#shot-side:checked) picture:has(img.shot-side) {
+.gallery:has(#shot-side:checked) img.shot-side {
 	display: block;
 }
 
@@ -302,6 +296,10 @@ footer {
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--space-2);
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
 }
 
 .thumbs label {
@@ -595,6 +593,144 @@ footer {
 	background: var(--color-surface);
 }
 
+.hero-grid {
+	grid-template-areas:
+		"intro media"
+		"lead lead"
+		"buy buy";
+	grid-template-columns: minmax(0, 1fr) minmax(0, 36%);
+	gap: var(--space-4);
+}
+
+.hero-intro {
+	grid-area: intro;
+	align-self: center;
+}
+
+.hero-media {
+	grid-area: media;
+	align-self: center;
+}
+
+.hero-media img {
+	width: 100%;
+	aspect-ratio: 3 / 4;
+	object-fit: contain;
+}
+
+.hero-lead {
+	grid-area: lead;
+	display: grid;
+	gap: var(--space-2);
+}
+
+.hero-lead p {
+	margin: 0;
+}
+
+.hero-buy {
+	grid-area: buy;
+}
+
+.feature-copy {
+	display: grid;
+	align-content: start;
+	gap: var(--space-4);
+}
+
+.feature-copy p {
+	margin: 0;
+}
+
+.split-feature,
+.origin-grid,
+.product-grid,
+.closing-grid {
+	display: grid;
+	align-items: start;
+	gap: var(--space-8);
+}
+
+.editorial-photo {
+	margin: 0;
+	overflow: hidden;
+	border-radius: var(--radius-large);
+	background: var(--color-sage);
+}
+
+.editorial-photo img {
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	object-fit: cover;
+}
+
+.story-slot {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: center;
+	gap: var(--space-4);
+	margin-top: var(--space-4);
+}
+
+.story-slot img {
+	width: var(--space-24);
+}
+
+.chip-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	margin: var(--space-4) 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.chip-list li {
+	padding: var(--space-2) var(--space-3);
+	border: var(--border-thin) solid var(--color-line);
+	border-radius: var(--radius-pill);
+	font-size: var(--type-footnote);
+	font-weight: 700;
+}
+
+.comparison-table {
+	width: 100%;
+	border-top: var(--border-thin) solid var(--color-line);
+	border-collapse: collapse;
+	text-align: left;
+}
+
+.comparison-row {
+	display: grid;
+	gap: var(--space-2);
+	padding: var(--space-4) 0;
+	border-bottom: var(--border-thin) solid var(--color-line);
+}
+
+.comparison-row th {
+	font-family: var(--font-display);
+	font-size: var(--type-heading);
+	font-weight: 600;
+	text-align: left;
+}
+
+.subscription-panel,
+.local-stores-panel,
+.faq-layout {
+	display: grid;
+	align-items: start;
+	gap: var(--space-8);
+}
+
+.subscription-panel .feature-copy a,
+.local-stores-panel .feature-copy a {
+	justify-self: start;
+}
+
+.plan-option small {
+	font-size: var(--type-footnote);
+}
+
 @media (min-width: 37.5rem) {
 	.wrap {
 		padding-inline: var(--layout-gutter-medium);
@@ -603,6 +739,12 @@ footer {
 	.card-grid,
 	.ritual-grid {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.comparison-row {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+		align-items: start;
+		gap: var(--space-6);
 	}
 }
 
@@ -629,9 +771,29 @@ footer {
 	}
 
 	.hero-grid {
+		grid-template-areas:
+			"intro media"
+			"lead media"
+			"buy media";
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-		gap: var(--space-16);
+		gap: var(--space-8) var(--space-16);
 		padding-block: var(--space-16);
+	}
+
+	.hero-media img {
+		aspect-ratio: auto;
+	}
+
+	.split-feature,
+	.origin-grid,
+	.product-grid,
+	.closing-grid,
+	.subscription-panel,
+	.local-stores-panel,
+	.faq-layout {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		align-items: center;
+		gap: var(--space-16);
 	}
 }
 
@@ -646,6 +808,10 @@ footer {
 
 	.card-grid {
 		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.card-grid:has(> :nth-child(4)) {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
 	}
 
 	.ritual-grid {
