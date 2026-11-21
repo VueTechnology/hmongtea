@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as ForgotRouteImport } from './routes/forgot'
+import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as PartnersRouteImport } from './routes/partners'
@@ -65,6 +66,11 @@ const CartRoute = CartRouteImport.update({
 const ForgotRoute = ForgotRouteImport.update({
   id: '/forgot',
   path: '/forgot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthzRoute = HealthzRouteImport.update({
+  id: '/healthz',
+  path: '/healthz',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -267,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
   '/forgot': typeof ForgotRoute
+  '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/partners': typeof PartnersRoute
@@ -311,6 +318,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
   '/forgot': typeof ForgotRoute
+  '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/partners': typeof PartnersRoute
@@ -356,6 +364,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
   '/forgot': typeof ForgotRoute
+  '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/partners': typeof PartnersRoute
@@ -402,6 +411,7 @@ export interface FileRouteTypes {
     | '/'
     | '/cart'
     | '/forgot'
+    | '/healthz'
     | '/login'
     | '/logout'
     | '/partners'
@@ -446,6 +456,7 @@ export interface FileRouteTypes {
     | '/'
     | '/cart'
     | '/forgot'
+    | '/healthz'
     | '/login'
     | '/logout'
     | '/partners'
@@ -490,6 +501,7 @@ export interface FileRouteTypes {
     | '/'
     | '/cart'
     | '/forgot'
+    | '/healthz'
     | '/login'
     | '/logout'
     | '/partners'
@@ -535,6 +547,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CartRoute: typeof CartRoute
   ForgotRoute: typeof ForgotRoute
+  HealthzRoute: typeof HealthzRoute
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   PartnersRoute: typeof PartnersRoute
@@ -597,6 +610,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot'
       fullPath: '/forgot'
       preLoaderRoute: typeof ForgotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/healthz': {
+      id: '/healthz'
+      path: '/healthz'
+      fullPath: '/healthz'
+      preLoaderRoute: typeof HealthzRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -879,6 +899,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CartRoute: CartRoute,
   ForgotRoute: ForgotRoute,
+  HealthzRoute: HealthzRoute,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   PartnersRoute: PartnersRoute,
