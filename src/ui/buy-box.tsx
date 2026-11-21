@@ -27,9 +27,7 @@ export function BuyBox({ id }: { id: string }) {
 			(entries) => {
 				const entry = entries[0];
 				if (!entry) return;
-				setStickyVisible(
-					!entry.isIntersecting && entry.boundingClientRect.top < 0,
-				);
+				setStickyVisible(entry.boundingClientRect.top < 0);
 			},
 			{ threshold: 0.01 },
 		);
@@ -130,26 +128,24 @@ export function BuyBox({ id }: { id: string }) {
 					charged.
 				</p>
 			</form>
-			<div
-				className="sticky-buy"
-				data-ht="sticky-buy"
-				data-visible={stickyVisible}
-			>
-				<div className="sticky-buy__text" aria-live="polite">
-					<strong>{formatUsd(selectedTotal)}</strong>
-					{plan === "subscription"
-						? `Subscription, every ${shell.subscriptionIntervalWeeks} weeks`
-						: "One-time purchase"}
-					{qty > 1 ? `, ${qty} packs` : ""}
+			{stickyVisible ? (
+				<div className="sticky-buy" data-ht="sticky-buy">
+					<div className="sticky-buy__text" aria-live="polite">
+						<strong>{formatUsd(selectedTotal)}</strong>
+						{plan === "subscription"
+							? `Subscription, every ${shell.subscriptionIntervalWeeks} weeks`
+							: "One-time purchase"}
+						{qty > 1 ? `, ${qty} packs` : ""}
+					</div>
+					<button
+						className={`${buttonClass} sticky-buy__button`}
+						form={formId}
+						type="submit"
+					>
+						Add to cart
+					</button>
 				</div>
-				<button
-					className={`${buttonClass} sticky-buy__button`}
-					form={formId}
-					type="submit"
-				>
-					Add to cart
-				</button>
-			</div>
+			) : null}
 			<div className="sticky-buy-spacer" aria-hidden="true" />
 		</>
 	);

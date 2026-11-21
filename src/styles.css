@@ -508,16 +508,6 @@ footer {
 	background: var(--color-surface);
 	color: var(--color-foreground);
 	box-shadow: var(--elevation-bar);
-	opacity: 0;
-	pointer-events: none;
-	transform: translateY(calc(100% + var(--space-4)));
-	transition: transform var(--duration-panel) ease-out, opacity var(--duration-state) ease-out;
-}
-
-.sticky-buy[data-visible="true"] {
-	opacity: 1;
-	pointer-events: auto;
-	transform: translateY(0);
 }
 
 .sticky-buy__text {
@@ -668,7 +658,4 @@ footer {
 		scroll-behavior: auto;
 	}
 
-	.sticky-buy {
-		transition: none;
-	}
 }
